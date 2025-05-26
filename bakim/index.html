@@ -8,7 +8,7 @@
       font-size: 36px;
       padding: 24px 48px;
       background-color: #0052CC;
-      color: red;
+      color: white;
       border: none;
       border-radius: 12px;
       cursor: pointer;
@@ -28,26 +28,24 @@
   </style>
 </head>
 <body>
+
   <h1>Bakım Talebi</h1>
   <button id="myCustomTrigger">📋 Bakım Talebi Gönder</button>
 
-  <!-- Trigger function to bind the custom button -->
+  <!-- Jira'nın verdiği script KODU AYNEN KALACAK -->
+  <script type="text/javascript" src="https://gemkom-1.atlassian.net/s/d41d8cd98f00b204e9800998ecf8427e-T/xghl7j/b/9/c95134bc67d3a521bb3f4331beb9b804/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issuecollector-plugin:issuecollector.js?locale=tr-TR&collectorId=3eb49cb5"></script>
+
   <script type="text/javascript">
-    
     window.ATL_JQ_PAGE_PROPS = {
       "triggerFunction": function(showCollectorDialog) {
+        // Requires that jQuery is available!
         jQuery("#myCustomTrigger").click(function(e) {
           e.preventDefault();
           showCollectorDialog();
         });
       }
     };
-    src="https://gemkom-1.atlassian.net/s/d41d8cd98f00b204e9800998ecf8427e-T/xghl7j/b/9/c95134bc67d3a521bb3f4331beb9b804/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issuecollector-plugin:issuecollector.js?locale=tr-TR&collectorId=3eb49cb5">
   </script>
 
-  <!-- Jira Issue Collector script -->
-  <script type="text/javascript"
-    src="https://gemkom-1.atlassian.net/s/d41d8cd98f00b204e9800998ecf8427e-T/xghl7j/b/9/c95134bc67d3a521bb3f4331beb9b804/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issuecollector-plugin:issuecollector.js?locale=tr-TR&collectorId=3eb49cb5">
-  </script>
 </body>
 </html>
