@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <title>Bakım</title>
   <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
     #myCustomTrigger {
       font-size: 36px;
       padding: 24px 48px;
@@ -21,9 +28,15 @@
       transform: scale(1.05);
     }
 
-    body {
-      text-align: center;
-      font-family: Arial, sans-serif;
+    .image-container {
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .image-container img {
+      max-width: 80%;
+      height: auto;
     }
   </style>
 </head>
@@ -32,13 +45,14 @@
   <h1>Bakım Talebi</h1>
   <button id="myCustomTrigger">📋 Bakım Talebi Gönder</button>
 
-  <!-- Jira'nın verdiği script KODU AYNEN KALACAK -->
-  <script type="text/javascript" src="https://gemkom-1.atlassian.net/s/d41d8cd98f00b204e9800998ecf8427e-T/xghl7j/b/9/c95134bc67d3a521bb3f4331beb9b804/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issuecollector-plugin:issuecollector.js?locale=tr-TR&collectorId=3eb49cb5"></script>
+  <div class="image-container">
+    <img src="../images/layout.png" alt="Layout">
+  </div>
 
+  <!-- Jira Issue Collector script (keep order) -->
   <script type="text/javascript">
     window.ATL_JQ_PAGE_PROPS = {
       "triggerFunction": function(showCollectorDialog) {
-        // Requires that jQuery is available!
         jQuery("#myCustomTrigger").click(function(e) {
           e.preventDefault();
           showCollectorDialog();
@@ -46,8 +60,7 @@
       }
     };
   </script>
-
-  <img src="../images/layout.png" alt="Layout" style="max-width: 100%;">
+  <script type="text/javascript" src="https://gemkom-1.atlassian.net/s/d41d8cd98f00b204e9800998ecf8427e-T/xghl7j/b/9/c95134bc67d3a521bb3f4331beb9b804/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issuecollector-plugin:issuecollector.js?locale=tr-TR&collectorId=3eb49cb5"></script>
 
 </body>
 </html>
