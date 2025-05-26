@@ -2,33 +2,50 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Bakım Sayfası</title>
+  <title>Bakım Talebi</title>
+  <style>
+    #myCustomTrigger {
+      font-size: 36px;
+      padding: 24px 48px;
+      background-color: #0052CC;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 100px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      transition: transform 0.2s ease;
+    }
+
+    #myCustomTrigger:hover {
+      transform: scale(1.05);
+    }
+
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+    }
+  </style>
 </head>
 <body>
-  <h1>Bakım Formu</h1>
-  <p>Lütfen aşağıdaki formu kullanarak sorununuzu bildirin.</p>
+  <h1>Bakım Talebi</h1>
+  <button id="myCustomTrigger">📋 Bakım Talebi Gönder</button>
 
-  <script type="text/javascript"
-    src="https://gemkom-1.atlassian.net/s/d41d8cd98f00b204e9800998ecf8427e-T/xghl7j/b/9/c95134bc67d3a521bb3f4331beb9b804/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?locale=tr-TR&collectorId=3eb49cb5">
-  </script>
-  <script>
-  window.onload = function () {
-    setTimeout(function () {
-      var btn = document.querySelector('.jira-issue-collector-trigger');
-      if (btn) {
-        btn.style.fontSize = '32px';           // Yazı boyutu
-        btn.style.padding = '20px 40px';       // Buton içi boşluk
-        btn.style.borderRadius = '10px';       // Kenar yuvarlaklığı
-        btn.style.backgroundColor = '#0052CC'; // Renk (isteğe göre değiştir)
-        btn.style.color = 'white';             // Yazı rengi
-        btn.style.cursor = 'pointer';
-        btn.style.display = 'inline-block';    // Doğru boyutlaması için
-        btn.style.marginTop = '50px';
-        btn.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.2)'; // Gölge efekti
-        btn.textContent = '📋 Bakım Talebi Gönder';
+  <!-- Trigger function to bind the custom button -->
+  <script type="text/javascript">
+    window.ATL_JQ_PAGE_PROPS = {
+      "triggerFunction": function(showCollectorDialog) {
+        jQuery("#myCustomTrigger").click(function(e) {
+          e.preventDefault();
+          showCollectorDialog();
+        });
       }
-    }, 1000); // Jira butonunun yüklenmesini beklemek için
-  };
-</script>
+    };
+  </script>
+
+  <!-- Jira Issue Collector script -->
+  <script type="text/javascript"
+    src="https://gemkom-1.atlassian.net/s/d41d8cd98f00b204e9800998ecf8427e-T/xghl7j/b/9/c95134bc67d3a521bb3f4331beb9b804/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issuecollector-plugin:issuecollector.js?locale=tr-TR&collectorId=3eb49cb5">
+  </script>
 </body>
 </html>
