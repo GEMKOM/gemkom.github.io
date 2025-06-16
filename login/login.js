@@ -42,10 +42,9 @@ document.getElementById('login-button').addEventListener('click', async () => {
   const user = document.getElementById('user-select').value;
   const pass = document.getElementById('password-input').value;
   if (!user || !pass) return alert("Lütfen kullanıcı ve şifre giriniz.");
-  res = await checkLogin(user, pass)
-  console.log(res)
+  res = await checkLogin(user, pass);
   if (res.ok) {
-    login_data = await res.json();
+    const login_data = await res.json();
     localStorage.setItem('user-id', user);
     localStorage.setItem('is-admin', login_data.admin ? 'true' : 'false');
     if (login_data.admin) {
