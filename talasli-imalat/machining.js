@@ -37,4 +37,14 @@ async function loadAndRender(filterId) {
 // Placeholder – you’d move your full timer logic here
 function openTimer(issue, restoring = false) {
   alert(`Timer opened for ${issue.key}`);
-  // You can move timer DOM and bac
+  // You can move timer DOM and backend logic into another module if needed.
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!state.userId) return (window.location.href = '/login');
+
+  setupMachineFilters(filters, loadAndRender);
+  setupSearchInput();
+  setupLogoutButton();
+  restoreTimerState(openTimer);
+});
