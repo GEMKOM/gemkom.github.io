@@ -1,4 +1,8 @@
-import { proxyBase, backendBase } from '../base.js';
+// --- machiningService.js ---
+import {
+  proxyBase,
+  backendBase
+} from '../base.js';
 
 export const state = {
   base: 'https://gemkom-1.atlassian.net',
