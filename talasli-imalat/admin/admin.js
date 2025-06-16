@@ -117,13 +117,9 @@ document.getElementById('refresh-button').addEventListener('click', async () => 
 });
 
 document.getElementById('logout-button').addEventListener('click', () => {
-  if (state.timerActive){
-      alert("Lütfen önce zamanlayıcıyı durdurun.");
-      return;
-  }
   localStorage.removeItem('user-id');
-  state.userId = null;
-  document.getElementById('login-view').classList.remove('hidden');
+  localStorage.removeItem('is-admin');
+  window.location.href = '/login';
 });
 
 checkAccessAndLoad();
