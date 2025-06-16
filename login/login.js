@@ -1,3 +1,4 @@
+import { backendBase } from "../base";
 async function loadUsers() {
   try {
     const res = await fetch(`${backendBase}/user/list`);

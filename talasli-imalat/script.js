@@ -1,4 +1,5 @@
 // Updated with Cloudflare Worker backend integration and proper CORS support
+import { proxyBase, backendBase } from "../base";
 
 const state = {
   base: 'https://gemkom-1.atlassian.net',
@@ -10,9 +11,6 @@ const state = {
   selectedMachine: null
 };
 
-
-const proxyBase = 'https://falling-bread-330e.ocalik.workers.dev/?url=';
-const backendBase = 'https://falling-bread-330e.ocalik.workers.dev';
 
 if (localStorage.getItem('is-admin') === 'true' && !window.location.pathname.includes('/admin')) {
   window.location.href = 'talasli-imalat/admin';

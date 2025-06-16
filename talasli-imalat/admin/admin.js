@@ -1,4 +1,4 @@
-const backendBase = 'https://falling-bread-330e.ocalik.workers.dev';
+import { backendBase } from "../../base";
 const activeRows = {};  // { issue_key: { startTime, rowElement, durationCell } }
 
 if (localStorage.getItem('is-admin') !== 'true') {
