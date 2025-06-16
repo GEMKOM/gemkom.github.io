@@ -43,6 +43,7 @@ document.getElementById('login-button').addEventListener('click', async () => {
   const pass = document.getElementById('password-input').value;
   if (!user || !pass) return alert("Lütfen kullanıcı ve şifre giriniz.");
   res = await checkLogin(user, pass)
+  console.log(res)
   if (res.ok) {
     login_data = await res.json();
     localStorage.setItem('user-id', user);
