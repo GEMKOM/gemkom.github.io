@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Talaşlı İmalat İş Takip Ekranı</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Login View -->
+  <div id="login-view">
+    <h2>Kullanıcı Girişi</h2>
+
+    <div class="form-row">
+      <label for="user-select">Kullanıcı:</label>
+      <select id="user-select">
+        <option value="">Seçiniz...</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label for="password-input">Şifre:</label>
+      <input id="password-input" type="password" placeholder="Şifre girin" />
+    </div>
+
+    <button id="login-button">Giriş Yap</button>
+  </div>
+
+  <!-- Ana Uygulama -->
+  <div id="app" class="hidden">
+
+    <h1>Talaşlı İmalat İş Takip Ekranı</h1>
+    <div id="top-bar">
+      <span id="current-user-label"></span>
+      <button id="logout-button">Çıkış Yap</button>
+    </div>
+
+    <div id="main-view">
+      <div id="filter-bar" class="filter-bar"></div>
+      <input type="text" id="search-input" placeholder="TI No ile ara..." />
+      <ul id="task-list" class="task-list"></ul>
+    </div>
+
+    <div id="timer-view" class="timer-view hidden">
+      <h2 id="task-title" class="task-header">TASK-123</h2>
+      
+      <div id="timer-display" class="timer-display">00:00:00</div>
+      
+      <div class="button-group">
+        <button id="start-stop" class="action-button green">Başlat</button>
+        <button id="manual-log-button" class="secondary-button">Süre Gir</button>
+        <button id="mark-done-button" class="secondary-button">Bitti Olarak İşaretle</button>
+        <button id="stop-only-button" class="danger-button">Sadece Durdur</button>
+        <button id="back-button" class="back-button">← Geri</button>
+      </div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

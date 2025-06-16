@@ -1,0 +1,38 @@
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Paneli</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <h1>Aktif Zamanlayıcılar</h1>
+
+  <div class="filter-controls">
+    <label for="user-filter">Kullanıcı:</label>
+    <select id="user-filter">
+      <option value="">Tümü</option>
+    </select>
+
+    <label for="issue-filter">TI No:</label>
+    <input type="text" id="issue-filter" placeholder="Örn: 1234" />
+
+    <button id="refresh-button" class="refresh-btn">↻ Yenile</button>
+  </div>
+
+  <div class="table-container">
+    <table id="admin-table">
+      <thead>
+        <tr>
+          <th>Kullanıcı</th>
+          <th>Issue</th>
+          <th>Süre</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <script src="admin.js"></script>
+</body>
+</html>
