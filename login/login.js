@@ -27,6 +27,7 @@ function checkExistingLogin(){
       window.location.href = '/talasli-imalat'
     }
   } else {
+    console.log(window.location.href)
     if (window.location.href !== '/login'){
       window.location.href = '/login'
     }
