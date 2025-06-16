@@ -26,7 +26,9 @@ function checkExistingLogin() {
     } else {
         window.location.href = '/talasli-imalat';
     }
+    return true;
   }
+  return false;
 }
 
 async function checkLogin(user_id, password) {
@@ -58,5 +60,6 @@ document.getElementById('login-button').addEventListener('click', async () => {
 });
 
 
-checkExistingLogin();
-loadUsers();
+if(!checkExistingLogin()){
+  loadUsers();
+}
