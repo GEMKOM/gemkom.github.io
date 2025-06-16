@@ -61,17 +61,6 @@ document.getElementById('login-button').addEventListener('click', async () => {
   }
 });
 
-document.getElementById('logout-button').addEventListener('click', () => {
-  if (state.timerActive){
-      alert("Lütfen önce zamanlayıcıyı durdurun.");
-      return;
-  }
-  localStorage.removeItem('user-id');
-  localStorage.removeItem('jira-timer-state');
-  state.userId = null;
-  document.getElementById('app').classList.add('hidden');
-  document.getElementById('login-view').classList.remove('hidden');
-});
 
 checkExistingLogin();
 loadUsers();

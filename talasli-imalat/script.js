@@ -399,5 +399,16 @@ document.getElementById('search-input').oninput = (e) => {
   renderTaskList(filtered);
 };
 
+document.getElementById('logout-button').addEventListener('click', () => {
+  if (state.timerActive){
+      alert("Lütfen önce zamanlayıcıyı durdurun.");
+      return;
+  }
+  localStorage.removeItem('user-id');
+  localStorage.removeItem('jira-timer-state');
+  state.userId = null;
+  window.location.href = 'login'
+});
+
 restoreTimerState();
 setupFilterButtons();
