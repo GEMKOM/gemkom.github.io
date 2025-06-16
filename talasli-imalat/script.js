@@ -134,7 +134,7 @@ document.getElementById('login-button').addEventListener('click', async () => {
     document.getElementById('current-user-label').textContent = `${state.userId} olarak giriş yapıldı`;
     localStorage.setItem('user-id', user);
     if (login_data.admin) {
-      window.location.href = 'file:///C:/Users/ocal%C4%B1k/OneDrive%20-%20GEMKOM/Masa%C3%BCst%C3%BC/Jira%20Timer/admin/index.html'; // 🔁 Redirect to admin page
+      window.location.href = '/admin'; // 🔁 Redirect to admin page
     } else {
       document.getElementById('login-view').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden');
