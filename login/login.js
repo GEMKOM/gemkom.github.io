@@ -1,4 +1,4 @@
-import { backendBase } from "../base";
+import { backendBase } from "../base.js";
 
 async function loadUsers() {
   try {
