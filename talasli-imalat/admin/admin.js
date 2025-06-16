@@ -1,6 +1,10 @@
 const backendBase = 'https://falling-bread-330e.ocalik.workers.dev';
 const activeRows = {};  // { issue_key: { startTime, rowElement, durationCell } }
 
+if (localStorage.getItem('is-admin') !== 'true') {
+  window.location.href = '/';
+}
+
 async function loadUserOptions() {
   try {
     const res = await fetch(`${backendBase}/user/list`);

@@ -14,6 +14,9 @@ const state = {
 const proxyBase = 'https://falling-bread-330e.ocalik.workers.dev/?url=';
 const backendBase = 'https://falling-bread-330e.ocalik.workers.dev';
 
+if (localStorage.getItem('is-admin') === 'true' && !window.location.pathname.includes('/admin')) {
+  window.location.href = 'talasli-imalat/admin';
+}
 
 async function loadUsers() {
   try {
@@ -133,8 +136,9 @@ document.getElementById('login-button').addEventListener('click', async () => {
     state.userId = user;
     document.getElementById('current-user-label').textContent = `${state.userId} olarak giriş yapıldı`;
     localStorage.setItem('user-id', user);
+    localStorage.setItem('is-admin', login_data.admin ? 'true' : 'false');
     if (login_data.admin) {
-      window.location.href = '/admin'; // 🔁 Redirect to admin page
+      window.location.href = 'talasli-imalat/admin'; // 🔁 Redirect to admin page
     } else {
       document.getElementById('login-view').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden');
