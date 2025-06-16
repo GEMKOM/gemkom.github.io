@@ -2,7 +2,7 @@ import { backendBase } from "../../base";
 const activeRows = {};  // { issue_key: { startTime, rowElement, durationCell } }
 
 if (localStorage.getItem('is-admin') !== 'true') {
-  window.location.href = '/';
+  window.location.href = '/login';
 }
 
 async function loadUserOptions() {

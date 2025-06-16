@@ -22,9 +22,9 @@ function checkExistingLogin() {
   const isAdmin = localStorage.getItem('is-admin');
   if (savedUser) {
     if (isAdmin){
-        window.location.href = 'talasli-imalat/admin';
+        window.location.href = '/talasli-imalat/admin';
     } else {
-        window.location.href = 'talasli-imalat';
+        window.location.href = '/talasli-imalat';
     }
   }
 }
@@ -58,5 +58,5 @@ document.getElementById('login-button').addEventListener('click', async () => {
 });
 
 
-//checkExistingLogin();
+checkExistingLogin();
 loadUsers();

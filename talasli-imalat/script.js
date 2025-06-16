@@ -11,9 +11,11 @@ const state = {
   selectedMachine: null
 };
 
-
-if (localStorage.getItem('is-admin') === 'true' && !window.location.pathname.includes('/admin')) {
-  window.location.href = 'talasli-imalat/admin';
+if (!localStorage.getItem('user-id')) {
+  window.location.href = '/login';
+}
+else if (localStorage.getItem('is-admin') === 'true' && !window.location.pathname.includes('/admin')) {
+  window.location.href = '/talasli-imalat/admin';
 }
 
 
