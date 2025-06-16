@@ -17,7 +17,7 @@ async function loadUsers() {
   }
 }
 
-function checkExistingLogin(){
+export function checkExistingLogin(){
   const userId = localStorage.getItem('user-id');
   const isAdmin = localStorage.getItem('is-admin');
   if (userId){
