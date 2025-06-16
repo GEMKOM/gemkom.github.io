@@ -1,5 +1,5 @@
 // Updated with Cloudflare Worker backend integration and proper CORS support
-import { proxyBase, backendBase } from "../base";
+import { proxyBase, backendBase } from "../base.js";
 
 const state = {
   base: 'https://gemkom-1.atlassian.net',

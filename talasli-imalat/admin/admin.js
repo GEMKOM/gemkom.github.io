@@ -1,4 +1,4 @@
-import { backendBase } from "../../base";
+import { backendBase } from "../../base.js";
 const activeRows = {};  // { issue_key: { startTime, rowElement, durationCell } }
 
 if (localStorage.getItem('is-admin') !== 'true') {
