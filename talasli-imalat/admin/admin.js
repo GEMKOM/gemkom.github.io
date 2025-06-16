@@ -1,9 +1,8 @@
 import { backendBase } from "../../base.js";
 const activeRows = {};  // { issue_key: { startTime, rowElement, durationCell } }
+import { checkExistingLogin } from "../../login/login.js"
 
-if (localStorage.getItem('is-admin') !== 'true') {
-  window.location.href = '/login';
-}
+checkExistingLogin();
 
 async function loadUserOptions() {
   try {
@@ -91,21 +90,6 @@ async function loadTimers() {
   }
 }
 
-async function checkAccessAndLoad() {
-  const userId = localStorage.getItem('user-id');
-  if (!userId) return window.location.href = '/';
-
-  const res = await fetch(`${backendBase}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: userId, password: '__validate__' })
-  });
-
-  if (res.status !== 200) return window.location.href = '/';
-
-  await loadUserOptions();
-  await loadTimers();
-}
 
 document.getElementById('user-filter').addEventListener('change', loadTimers);
 document.getElementById('issue-filter').addEventListener('input', loadTimers);
@@ -122,5 +106,6 @@ document.getElementById('logout-button').addEventListener('click', () => {
   window.location.href = '/login';
 });
 
-checkAccessAndLoad();
+loadUserOptions();
+loadTimers();
 setInterval(updateDurations, 1000);

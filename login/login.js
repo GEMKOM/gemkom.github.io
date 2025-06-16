@@ -17,18 +17,21 @@ async function loadUsers() {
   }
 }
 
-function checkExistingLogin() {
-  const savedUser = localStorage.getItem('user-id');
+function checkExistingLogin(){
+  const userId = localStorage.getItem('user-id');
   const isAdmin = localStorage.getItem('is-admin');
-  if (savedUser) {
+  if (userId){
     if (isAdmin){
-        window.location.href = '/talasli-imalat/admin';
+      window.location.href = '/talasli-imalat/admin'
     } else {
-        window.location.href = '/talasli-imalat';
+      window.location.href = '/talasli-imalat'
     }
-    return true;
+  } else {
+    if (window.location.href !== '/login'){
+      window.location.href = '/login'
+    }
   }
-  return false;
+
 }
 
 async function checkLogin(user_id, password) {
@@ -59,7 +62,5 @@ document.getElementById('login-button').addEventListener('click', async () => {
   }
 });
 
-
-if(!checkExistingLogin()){
-  loadUsers();
-}
+checkExistingLogin();
+loadUsers();

@@ -1,5 +1,8 @@
 // Updated with Cloudflare Worker backend integration and proper CORS support
 import { proxyBase, backendBase } from "../base.js";
+import { checkExistingLogin } from "../login/login.js"
+
+checkExistingLogin();
 
 const state = {
   base: 'https://gemkom-1.atlassian.net',
@@ -10,13 +13,6 @@ const state = {
   userId: null,
   selectedMachine: null
 };
-
-if (!localStorage.getItem('user-id')) {
-  window.location.href = '/login';
-}
-else if (localStorage.getItem('is-admin') === 'true' && !window.location.pathname.includes('/admin')) {
-  window.location.href = '/talasli-imalat/admin';
-}
 
 
 function formatTime(secs) {
