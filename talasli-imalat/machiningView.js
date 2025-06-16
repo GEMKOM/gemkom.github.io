@@ -11,6 +11,8 @@ import {
   backendBase
 } from '../base.js';
 
+import { syncServerTime, getSyncedNow } from '../timeService.js';
+
 export function renderTaskList(issues, openTimerCallback) {
   const ul = document.getElementById('task-list');
   ul.innerHTML = '';
@@ -95,7 +97,7 @@ export function setupTimerHandlers(issue, restoring = false) {
   const backBtn = document.getElementById('back-button');
 
   function updateTimerDisplay() {
-    const elapsed = Math.round((Date.now() - state.startTime) / 1000);
+    const elapsed = Math.round((getSyncedNow() - state.startTime) / 1000);
     document.getElementById('timer-display').textContent = formatTime(elapsed);
   }
 
@@ -135,7 +137,7 @@ export function setupTimerHandlers(issue, restoring = false) {
 
   startBtn.onclick = async () => {
     if (!state.timerActive) {
-      state.startTime = Date.now();
+      state.startTime = getSyncedNow()
       state.timerActive = true;
       startBtn.textContent = 'Durdur ve İşle';
       startBtn.classList.remove('green');
@@ -160,10 +162,10 @@ export function setupTimerHandlers(issue, restoring = false) {
       });
     } else {
       clearInterval(state.intervalId);
-      let elapsed = Math.round((Date.now() - state.startTime) / 1000);
+      let elapsed = Math.round((getSyncedNow() - state.startTime) / 1000);
       if (elapsed < 60) elapsed = 60;
       const started = formatJiraDate(state.startTime);
-      state.finish_time = Date.now();
+      state.finish_time = getSyncedNow();
       state.timerActive = false;
       startBtn.disabled = true;
       startBtn.textContent = 'İşleniyor...';
@@ -223,7 +225,7 @@ export function setupTimerHandlers(issue, restoring = false) {
       body: JSON.stringify({
         user_id: state.userId,
         issue_key: state.currentIssueKey,
-        finish_time: Date.now(),
+        finish_time: getSyncedNow(),
         synced_to_jira: false
       })
     });
@@ -237,7 +239,7 @@ export function setupTimerHandlers(issue, restoring = false) {
     const mins = parseInt(input);
     if (isNaN(mins) || mins <= 0) return alert("Geçersiz giriş.");
     const seconds = mins * 60;
-    const started = formatJiraDate(Date.now() - seconds);
+    const started = formatJiraDate(getSyncedNow() - seconds);
 
     fetch(proxyBase + encodeURIComponent(`${state.base}/rest/api/3/issue/${issue.key}/worklog`), {
       method: 'POST',
@@ -303,3 +305,5 @@ export function setupTimerHandlers(issue, restoring = false) {
     document.getElementById('main-view').classList.remove('hidden');
   };
 }
+
+syncServerTime();

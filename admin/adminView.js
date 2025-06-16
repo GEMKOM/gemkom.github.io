@@ -1,5 +1,6 @@
 // --- adminView.js ---
 import { fetchUsers, fetchActiveTimers, formatDuration } from './adminService.js';
+import { syncServerTime } from '../timeService.js';
 
 const activeRows = {};
 
@@ -88,3 +89,5 @@ export function setupAdminListeners() {
     window.location.href = '/login';
   });
 }
+
+syncServerTime();

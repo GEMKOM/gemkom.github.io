@@ -11,7 +11,7 @@ export async function fetchActiveTimers() {
 }
 
 export function formatDuration(startTime) {
-  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const elapsed = Math.floor((getSyncedNow() - startTime) / 1000);
   const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
   const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
   const s = (elapsed % 60).toString().padStart(2, '0');
