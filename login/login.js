@@ -1,0 +1,75 @@
+async function loadUsers() {
+  try {
+    const res = await fetch(`${backendBase}/user/list`);
+    const users = await res.json();
+    const userSelect = document.getElementById('user-select');
+
+    users.forEach(u => {
+      const option = document.createElement('option');
+      option.value = u.user_id;
+      option.textContent = u.user_id;
+      userSelect.appendChild(option);
+    });
+  } catch (err) {
+    alert("Kullanıcılar yüklenemedi: " + err.message);
+  }
+}
+
+function checkExistingLogin() {
+  const savedUser = localStorage.getItem('user-id');
+  if (savedUser) {
+    state.userId = savedUser;
+    document.getElementById('login-view').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    restoreTimerState();
+  } else {
+    document.getElementById('login-view').classList.remove('hidden');
+    document.getElementById('app').classList.add('hidden');
+  }
+}
+
+async function checkLogin(user_id, password) {
+  const res = await fetch(`${backendBase}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id, password })
+  });
+  return res;
+}
+
+document.getElementById('login-button').addEventListener('click', async () => {
+  const user = document.getElementById('user-select').value;
+  const pass = document.getElementById('password-input').value;
+  if (!user || !pass) return alert("Lütfen kullanıcı ve şifre giriniz.");
+  res = await checkLogin(user, pass)
+  if (res.ok) {
+    login_data = await res.json();
+    state.userId = user;
+    document.getElementById('current-user-label').textContent = `${state.userId} olarak giriş yapıldı`;
+    localStorage.setItem('user-id', user);
+    localStorage.setItem('is-admin', login_data.admin ? 'true' : 'false');
+    if (login_data.admin) {
+      window.location.href = 'talasli-imalat/admin'; // 🔁 Redirect to admin page
+    } else {
+      window.location.href = 'talasli-imalat/'
+      restoreTimerState();
+    }
+  } else {
+    alert("Şifre hatalı.");
+  }
+});
+
+document.getElementById('logout-button').addEventListener('click', () => {
+  if (state.timerActive){
+      alert("Lütfen önce zamanlayıcıyı durdurun.");
+      return;
+  }
+  localStorage.removeItem('user-id');
+  localStorage.removeItem('jira-timer-state');
+  state.userId = null;
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login-view').classList.remove('hidden');
+});
+
+checkExistingLogin();
+loadUsers();

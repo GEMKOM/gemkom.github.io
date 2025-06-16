@@ -116,5 +116,15 @@ document.getElementById('refresh-button').addEventListener('click', async () => 
   btn.classList.remove('loading');
 });
 
+document.getElementById('logout-button').addEventListener('click', () => {
+  if (state.timerActive){
+      alert("Lütfen önce zamanlayıcıyı durdurun.");
+      return;
+  }
+  localStorage.removeItem('user-id');
+  state.userId = null;
+  document.getElementById('login-view').classList.remove('hidden');
+});
+
 checkAccessAndLoad();
 setInterval(updateDurations, 1000);
