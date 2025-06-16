@@ -19,7 +19,6 @@ function checkExistingLogin() {
   const savedUser = localStorage.getItem('user-id');
   const isAdmin = localStorage.getItem('is-admin');
   if (savedUser) {
-    state.userId = savedUser;
     if (isAdmin){
         window.location.href = 'talasli-imalat/admin';
     } else {
@@ -46,15 +45,12 @@ document.getElementById('login-button').addEventListener('click', async () => {
   res = await checkLogin(user, pass)
   if (res.ok) {
     login_data = await res.json();
-    state.userId = user;
-    document.getElementById('current-user-label').textContent = `${state.userId} olarak giriş yapıldı`;
     localStorage.setItem('user-id', user);
     localStorage.setItem('is-admin', login_data.admin ? 'true' : 'false');
     if (login_data.admin) {
       window.location.href = 'talasli-imalat/admin'; // 🔁 Redirect to admin page
     } else {
       window.location.href = 'talasli-imalat/'
-      restoreTimerState();
     }
   } else {
     alert("Şifre hatalı.");
