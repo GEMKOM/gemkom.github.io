@@ -10,7 +10,7 @@ export function setupLoginUI() {
     const data = await checkLogin(user, pass);
     if (data) {
       saveLogin(user, data.admin);
-      window.location.href = data.admin ? '/talasli-imalat/admin' : '/talasli-imalat';
+      window.location.href = data.admin ? '/admin' : '/talasli-imalat';
     } else {
       alert("Şifre hatalı.");
     }
