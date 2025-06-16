@@ -58,5 +58,5 @@ document.getElementById('login-button').addEventListener('click', async () => {
 });
 
 
-checkExistingLogin();
+//checkExistingLogin();
 loadUsers();
