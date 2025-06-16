@@ -28,7 +28,7 @@ function checkExistingLogin(){
     }
   } else {
     console.log(window.location.href)
-    if (window.location.href !== '/login'){
+    if (window.location.href !== 'https://gemkom.github.io/login/'){
       window.location.href = '/login'
     }
   }
