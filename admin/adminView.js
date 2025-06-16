@@ -29,7 +29,7 @@ export async function loadTimerTable() {
   }).forEach(t => {
     newKeys.add(t.issue_key);
     if (activeRows[t.issue_key]) {
-      activeRows[t.issue_key].startTime = new Date(t.start_time).getTime();
+      activeRows[t.issue_key].startTime = t.start_time;
     } else {
       const tr = document.createElement('tr');
       const userTd = document.createElement('td');
@@ -38,8 +38,7 @@ export async function loadTimerTable() {
 
       userTd.textContent = t.user_id;
       issueTd.textContent = t.issue_key;
-      const start = new Date(t.start_time).getTime();
-      durationTd.textContent = formatDuration(start);
+      durationTd.textContent = formatDuration(t.start_time);
 
       tr.appendChild(userTd);
       tr.appendChild(issueTd);
