@@ -48,9 +48,9 @@ document.getElementById('login-button').addEventListener('click', async () => {
     localStorage.setItem('user-id', user);
     localStorage.setItem('is-admin', login_data.admin ? 'true' : 'false');
     if (login_data.admin) {
-      window.location.href = 'talasli-imalat/admin'; // 🔁 Redirect to admin page
+      window.location.href = '/talasli-imalat/admin'; // 🔁 Redirect to admin page
     } else {
-      window.location.href = 'talasli-imalat/'
+      window.location.href = '/talasli-imalat'
     }
   } else {
     alert("Şifre hatalı.");
