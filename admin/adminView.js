@@ -1,3 +1,4 @@
+// --- adminView.js ---
 import { fetchUsers, fetchActiveTimers, formatDuration } from './adminService.js';
 
 const activeRows = {};
@@ -66,7 +67,6 @@ export function startDurationUpdater() {
   setInterval(() => {
     for (const key in activeRows) {
       const row = activeRows[key];
-      const start = new Date(row.startTime).getTime();
       row.durationCell.textContent = formatDuration(row.startTime);
     }
   }, 1000);
