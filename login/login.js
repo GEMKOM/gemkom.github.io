@@ -26,8 +26,6 @@ function checkExistingLogin() {
     } else {
         window.location.href = 'talasli-imalat';
     }
-  } else {
-    window.location.href = 'login';
   }
 }
 
