@@ -17,14 +17,16 @@ async function loadUsers() {
 
 function checkExistingLogin() {
   const savedUser = localStorage.getItem('user-id');
+  const isAdmin = localStorage.getItem('is-admin');
   if (savedUser) {
     state.userId = savedUser;
-    document.getElementById('login-view').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    restoreTimerState();
+    if (isAdmin){
+        window.location.href = 'talasli-imalat/admin';
+    } else {
+        window.location.href = 'talasli-imalat';
+    }
   } else {
-    document.getElementById('login-view').classList.remove('hidden');
-    document.getElementById('app').classList.add('hidden');
+    window.location.href = 'login';
   }
 }
 
