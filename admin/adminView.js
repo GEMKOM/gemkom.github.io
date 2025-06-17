@@ -1,93 +1,92 @@
 // --- adminView.js ---
 import { fetchUsers, fetchActiveTimers, formatDuration } from './adminService.js';
-import { syncServerTime } from '../timeService.js';
+import { state } from './admin.js';
 
-const activeRows = {};
+let timerIntervals = {};
 
-export async function populateUserFilter() {
-  const users = await fetchUsers();
-  const select = document.getElementById('user-filter');
-  select.innerHTML = '<option value="">Tümü</option>';
-  users.forEach(u => {
-    const option = document.createElement('option');
-    option.value = u.user_id;
-    option.textContent = u.user_id;
-    select.appendChild(option);
-  });
+export async function updateActiveTimers() {
+    state.activeTimers = await fetchActiveTimers();
+    const tbody = document.getElementById('active-timers');
+    tbody.innerHTML = '';
+
+    state.activeTimers.filter(t => !t.finish_time).forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${t.user_id}</td>
+            <td>${t.machine}</td>
+            <td>${t.issue_key}</td>
+            <td id="timer-${t.id}">${formatDuration(t.start_time)}</td>
+            <td>
+                <button class="btn btn-danger btn-sm stop-timer" data-timer-id="${t.id}">Durdur</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        // Start frontend timer
+        startTimerInterval(t.id, t.start_time);
+    });
 }
 
-export async function loadTimerTable() {
-  const userFilter = document.getElementById('user-filter').value.toLowerCase();
-  const issueFilter = document.getElementById('issue-filter').value.toLowerCase();
-  const timers = await fetchActiveTimers();
-  const tableBody = document.querySelector('#admin-table tbody');
-  const newKeys = new Set();
-
-  timers.filter(t => {
-    if (t.finish_time) return false;
-    const matchesUser = userFilter ? t.user_id.toLowerCase() === userFilter : true;
-    const matchesIssue = issueFilter ? t.issue_key.toLowerCase().includes(issueFilter) : true;
-    return matchesUser && matchesIssue;
-  }).forEach(t => {
-    newKeys.add(t.issue_key);
-    if (activeRows[t.issue_key]) {
-      activeRows[t.issue_key].startTime = t.start_time;
-    } else {
-      const tr = document.createElement('tr');
-      const userTd = document.createElement('td');
-      const issueTd = document.createElement('td');
-      const durationTd = document.createElement('td');
-
-      userTd.textContent = t.user_id;
-      issueTd.textContent = t.issue_key;
-      durationTd.textContent = formatDuration(t.start_time);
-
-      tr.appendChild(userTd);
-      tr.appendChild(issueTd);
-      tr.appendChild(durationTd);
-      tableBody.appendChild(tr);
-
-      activeRows[t.issue_key] = {
-        startTime: t.start_time,
-        rowElement: tr,
-        durationCell: durationTd
-      };
+function startTimerInterval(timerId, startTime) {
+    if (timerIntervals[timerId]) clearInterval(timerIntervals[timerId]);
+    function update() {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
+        const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
+        const s = (elapsed % 60).toString().padStart(2, '0');
+        const el = document.getElementById(`timer-${timerId}`);
+        if (el) el.textContent = `${h}:${m}:${s}`;
     }
-  });
+    update();
+    timerIntervals[timerId] = setInterval(update, 1000);
+}
 
-  // Remove old rows
-  for (const key in activeRows) {
-    if (!newKeys.has(key)) {
-      activeRows[key].rowElement.remove();
-      delete activeRows[key];
+export async function updateMachines() {
+    const tbody = document.getElementById('machines-list');
+    tbody.innerHTML = '';
+    state.machines.forEach(u => {
+        const match = state.activeTimers.find(t => t.machine === u.name);
+        const isActive = !!match;
+        const badge = `<span class="badge rounded-pill ${isActive ? 'bg-success' : 'bg-danger'}">${isActive ? 'Aktif' : 'Pasif'}</span>`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${u.name}</td>
+            <td>${badge}</td>
+            <td></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+export function setupLogoutButton() {
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+        logoutButton.onclick = () => {
+            localStorage.clear();
+            window.location.href = '/login';
+        };
     }
-  }
 }
 
-export function startDurationUpdater() {
-  setInterval(() => {
-    for (const key in activeRows) {
-      const row = activeRows[key];
-      row.durationCell.textContent = formatDuration(row.startTime);
-    }
-  }, 1000);
+export function setupEventListeners() {
+    document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('stop-timer')) {
+            const timerId = e.target.dataset.timerId;
+            try {
+                const res = await fetch(`/backend/stop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ timer_id: timerId })
+                });
+                if (res.ok) {
+                    updateActiveTimers();
+                    updateMachines();
+                }
+            } catch (err) {
+                console.error('Error stopping timer:', err);
+            }
+        }
+        if (e.target.id === 'refresh-btn') {
+            window.location.reload();
+        }
+    });
 }
-
-export function setupAdminListeners() {
-  document.getElementById('user-filter').addEventListener('change', loadTimerTable);
-  document.getElementById('issue-filter').addEventListener('input', loadTimerTable);
-  document.getElementById('refresh-button').addEventListener('click', async () => {
-    const btn = document.getElementById('refresh-button');
-    btn.classList.add('loading');
-    await loadTimerTable();
-    btn.classList.remove('loading');
-  });
-
-  document.getElementById('logout-button').addEventListener('click', () => {
-    localStorage.removeItem('user-id');
-    localStorage.removeItem('is-admin');
-    window.location.href = '/login';
-  });
-}
-
-syncServerTime();

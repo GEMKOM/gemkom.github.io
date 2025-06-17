@@ -20,8 +20,11 @@ export function renderTaskList(issues, openTimerCallback) {
     const card = document.createElement('div');
     card.className = 'task-card';
     card.onclick = () => {
-      if (state.timerActive) return alert("Lütfen önce mevcut zamanlayıcıyı durdurun.");
-      openTimerCallback(issue);
+      if (state.timerActive) {
+        alert("Lütfen önce mevcut zamanlayıcıyı durdurun.");
+        return;
+      }
+      window.location.href = `/talasli-imalat/task.html?key=${issue.key}`;
     };
 
     const fields = issue.fields;
@@ -51,20 +54,19 @@ export function renderTaskList(issues, openTimerCallback) {
 }
 
 export function setupMachineFilters(filters, onClick) {
-  const bar = document.getElementById('filter-bar');
-  bar.innerHTML = '';
+  const select = document.getElementById('filter-select');
+  select.innerHTML = '<option value="">Seçiniz...</option>'; // Reset options with placeholder
 
   filters.forEach(f => {
-    const btn = document.createElement('button');
-    btn.textContent = f.name;
-    btn.className = 'filter-button';
-    btn.onclick = () => {
-      document.querySelectorAll('.filter-button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      onClick(f.id);
-    };
-    bar.appendChild(btn);
+    const option = document.createElement('option');
+    option.value = f.id;
+    option.textContent = f.name;
+    select.appendChild(option);
   });
+
+  select.onchange = () => {
+    onClick(select.value); // Call handler with selected value
+  };
 }
 
 export function setupSearchInput() {
@@ -78,15 +80,19 @@ export function setupSearchInput() {
 }
 
 export function setupLogoutButton() {
-  document.getElementById('logout-button').addEventListener('click', () => {
-    if (state.timerActive) {
-      alert("Lütfen önce zamanlayıcıyı durdurun.");
-      return;
-    }
-    localStorage.removeItem('user-id');
-    localStorage.removeItem('jira-timer-state');
-    window.location.href = '/login';
-  });
+  const logoutButton = document.getElementById('logout-button');
+  if (logoutButton) {
+    logoutButton.onclick = () => {
+      if (state.timerActive) {
+        alert("Lütfen önce zamanlayıcıyı durdurun.");
+        return;
+      }
+      // Clear all states
+      localStorage.clear();
+      // Redirect to login page
+      window.location.href = '/login';
+    };
+  }
 }
 
 export function setupTimerHandlers(issue, restoring = false) {
@@ -111,15 +117,13 @@ export function setupTimerHandlers(issue, restoring = false) {
     backBtn.style.display = 'block';
     startBtn.disabled = false;
     stopOnlyBtn.disabled = false;
-    document.getElementById('timer-display').textContent = '';
+    document.getElementById('timer-display').textContent = '00:00:00';
     state.timerActive = false;
     state.startTime = null;
     saveTimerState();
   }
 
   state.currentIssueKey = issue.key;
-  document.getElementById('main-view').classList.add('hidden');
-  document.getElementById('timer-view').classList.remove('hidden');
   document.getElementById('task-title').textContent = issue.key;
 
   if (restoring) {
@@ -137,7 +141,7 @@ export function setupTimerHandlers(issue, restoring = false) {
 
   startBtn.onclick = async () => {
     if (!state.timerActive) {
-      state.startTime = getSyncedNow()
+      state.startTime = getSyncedNow();
       state.timerActive = true;
       startBtn.textContent = 'Durdur ve İşle';
       startBtn.classList.remove('green');
@@ -157,7 +161,7 @@ export function setupTimerHandlers(issue, restoring = false) {
           user_id: state.userId,
           issue_key: state.currentIssueKey,
           start_time: state.startTime,
-          machine: state.selectedMachine
+          machine: state.selectedIssue.customfield_11411.value
         })
       });
     } else {
@@ -176,7 +180,7 @@ export function setupTimerHandlers(issue, restoring = false) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: state.userId,
-          finish_time: state.finish_time,
+          finish_time: getSyncedNow(),
           synced_to_jira: true
         })
       });
@@ -201,109 +205,104 @@ export function setupTimerHandlers(issue, restoring = false) {
         })
       });
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        alert(`Bir hata oluştu: ${res.status}\n${errorText}`);
+      if (res.ok) {
+        window.location.reload();
       } else {
-        alert(`${issue.key} işine ${formatTime(elapsed)} süresi eklendi.`);
+        alert("Hata oluştu. Lütfen tekrar deneyin.");
+        resetTimerUI();
       }
-
-      resetTimerUI();
     }
   };
 
   stopOnlyBtn.onclick = async () => {
     clearInterval(state.intervalId);
-    state.timerActive = false;
-    stopOnlyBtn.disabled = true;
-    startBtn.disabled = true;
-    saveTimerState();
-
+    resetTimerUI();
     await fetch(`${backendBase}/stop`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         user_id: state.userId,
-        issue_key: state.currentIssueKey,
         finish_time: getSyncedNow(),
         synced_to_jira: false
       })
     });
-
-    alert("Zamanlayıcı durduruldu. Jira’ya yazılmadı.");
-    resetTimerUI();
-  };
-
-  manualBtn.onclick = () => {
-    const input = prompt("Dakika cinsinden süre girin (örn: 30):");
-    const mins = parseInt(input);
-    if (isNaN(mins) || mins <= 0) return alert("Geçersiz giriş.");
-    const seconds = mins * 60;
-    const started = formatJiraDate(getSyncedNow() - seconds);
-
-    fetch(proxyBase + encodeURIComponent(`${state.base}/rest/api/3/issue/${issue.key}/worklog`), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        started,
-        timeSpentSeconds: seconds,
-        comment: {
-          type: 'doc',
-          version: 1,
-          content: [{
-            type: 'paragraph',
-            content: [{
-              type: 'text',
-              text: `Manuel giriş: ${formatTime(seconds)}`
-            }]
-          }]
-        }
-      })
-    }).then(async res => {
-      if (!res.ok) {
-        const errText = await res.text();
-        alert(`Hata: ${res.status} - ${errText}`);
-      } else {
-        alert(`${issue.key} için manuel olarak ${mins} dakika giriş yapıldı.`);
-      }
-    });
-  };
-
-  doneBtn.onclick = () => {
-    if (state.timerActive) {
-      alert("Lütfen önce zamanlayıcıyı durdurun.");
-      return;
-    }
-
-    const confirmDone = confirm("Bu görevi tamamen bitirdiniz mi?\nBu işlem görev durumunu 'Tamamlandı' yapacak.");
-    if (!confirmDone) return;
-
-    fetch(proxyBase + encodeURIComponent(`${state.base}/rest/api/3/issue/${issue.key}/transitions`), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        transition: { id: "41" }
-      })
-    }).then(async res => {
-      if (!res.ok) {
-        const errText = await res.text();
-        alert(`Durum değiştirilemedi: ${res.status}\n${errText}`);
-      } else {
-        alert("Görev tamamlandı olarak işaretlendi.");
-        document.getElementById('timer-view').classList.add('hidden');
-        document.getElementById('main-view').classList.remove('hidden');
-      }
-    });
+    window.location.reload();
   };
 
   backBtn.onclick = () => {
     if (state.timerActive) {
-      alert("Lütfen önce zamanlayıcıyı durdurun.");
+      if (!confirm("Zamanlayıcı aktif. Geri dönmek istediğinize emin misiniz?")) {
+        return;
+      }
+      clearInterval(state.intervalId);
+      resetTimerUI();
+    }
+    window.location.href = '/talasli-imalat';
+  };
+
+  manualBtn.onclick = async () => {
+    const minutes = prompt("Kaç dakika çalıştınız?");
+    if (!minutes || isNaN(minutes) || minutes <= 0) {
       return;
     }
-    document.getElementById('timer-view').classList.add('hidden');
-    document.getElementById('main-view').classList.remove('hidden');
+
+    const seconds = Math.round(parseFloat(minutes) * 60);
+    const started = formatJiraDate(getSyncedNow() - seconds * 1000);
+
+    try {
+      const res = await fetch(proxyBase + encodeURIComponent(`${state.base}/rest/api/3/issue/${issue.key}/worklog`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          started,
+          timeSpentSeconds: seconds,
+          comment: {
+            type: 'doc',
+            version: 1,
+            content: [{
+              type: 'paragraph',
+              content: [{
+                type: 'text',
+                text: `Manuel giriş: ${formatTime(seconds)}`
+              }]
+            }]
+          }
+        })
+      });
+
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        alert("Hata oluştu. Lütfen tekrar deneyin.");
+      }
+    } catch (error) {
+      console.error('Error logging time:', error);
+      alert("Hata oluştu. Lütfen tekrar deneyin.");
+    }
+  };
+
+  doneBtn.onclick = async () => {
+    if (!confirm("Bu işi tamamlandı olarak işaretlemek istediğinize emin misiniz?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(proxyBase + encodeURIComponent(`${state.base}/rest/api/3/issue/${issue.key}/transitions`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transition: { id: "41" }
+        })
+      });
+
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        alert("Hata oluştu. Lütfen tekrar deneyin.");
+      }
+    } catch (error) {
+      console.error('Error marking as done:', error);
+      alert("Hata oluştu. Lütfen tekrar deneyin.");
+    }
   };
 }
-
-syncServerTime();

@@ -13,7 +13,8 @@ export const state = {
   finish_time: null,
   userId: localStorage.getItem('user-id'),
   selectedMachine: null,
-  allIssues: []
+  allIssues: [],
+  selectedIssue: null
 };
 
 export function formatTime(secs) {
@@ -41,7 +42,7 @@ export function formatJiraDate(ms) {
 }
 
 export async function fetchIssuesByFilter(filterId) {
-  const url = `${state.base}/rest/api/3/search?jql=filter=${filterId}&fields=summary,customfield_10117,customfield_10184,customfield_10185,customfield_10187`;
+  const url = `${state.base}/rest/api/3/search?jql=filter=${filterId}&fields=summary,customfield_10117,customfield_10184,customfield_10185,customfield_10187, customfield_11411`;
   const res = await fetch(proxyBase + encodeURIComponent(url), {
     headers: { 'Content-Type': 'application/json' }
   });
