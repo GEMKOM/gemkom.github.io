@@ -1,12 +1,13 @@
-import { populateUserFilter, loadTimerTable, startDurationUpdater, setupAdminListeners } from './adminView.js';
-import { isAdmin } from '../login/loginService.js';
+import { updateActiveTimers, updateMachines, setupLogoutButton, setupEventListeners } from './adminView.js';
+import { filters } from '../globalVariables.js';
+export const state = {
+    machines: filters,
+    activeTimers: []
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
-  if (!isAdmin()) {
-    return window.location.href = '/login';
-  }
-  await populateUserFilter();
-  await loadTimerTable();
-  setupAdminListeners();
-  startDurationUpdater();
+    await updateActiveTimers();
+    updateMachines();
+    setupLogoutButton();
+    setupEventListeners();
 });

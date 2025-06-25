@@ -4,6 +4,7 @@ body {
     padding: 0;
     background: #f9f9f9;
     color: #333;
+    box-sizing: border-box;
 }
 
 h1 {
@@ -12,30 +13,6 @@ h1 {
     background: #4a90e2;
     color: white;
     margin: 0;
-}
-
-.filter-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 1rem;
-    background: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.filter-controls label {
-    font-weight: 600;
-    margin-right: 5px;
-}
-
-.filter-controls select,
-.filter-controls input[type="text"] {
-    padding: 0.5rem;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    min-width: 120px;
-    flex: 1;
 }
 
 .table-container {
@@ -61,40 +38,6 @@ th {
     font-weight: 600;
 }
 
-.refresh-btn {
-  padding: 8px 16px;
-  font-size: 1rem;
-  background-color: #2f80ed;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.refresh-btn:hover {
-  background-color: #1366d6;
-}
-
-.refresh-btn:active {
-  transform: scale(0.96);
-  background-color: #0d5ec2;
-}
-
-.refresh-btn.loading {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-#top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background-color: #f5f5f5;
-  border-bottom: 1px solid #ddd;
-}
-
 #logout-button {
   background-color: #cc0000;
   color: white;
@@ -110,15 +53,50 @@ th {
 }
 
 @media (max-width: 600px) {
-    .filter-controls {
-    flex-direction: column;
-    }
-
     table {
-    font-size: 0.9rem;
+        font-size: 0.9rem;
     }
+    th, td {
+        padding: 8px 12px;
+    }
+    h1 {
+        font-size: 1.2rem;
+        padding: 0.8rem;
+    }
+}
 
-    .refresh-btn {
-        width: 100%;
-    }
+.badge.bg-success {
+    background-color: #28a745 !important;
+    color: #fff;
+    font-size: 1em;
+    padding: 0.5em 1em;
+}
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: #fff;
+    font-size: 1em;
+    padding: 0.5em 1em;
+}
+#refresh-btn {
+    margin-bottom: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+#refresh-btn:active {
+    transform: scale(0.97);
+}
+
+/* Table and card improvements */
+.card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-radius: 12px;
+}
+.table th, .table td {
+    vertical-align: middle;
+}
+.table th {
+    background: #f4f6f8;
+    font-weight: 600;
 }

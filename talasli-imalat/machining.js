@@ -14,22 +14,9 @@ import {
   setupTimerHandlers
 } from './machiningView.js';
 
-const filters = [
-  { id: '10698', name: 'BF-V10' },
-  { id: '10697', name: 'BF-V13' },
-  { id: '10696', name: 'BK-1580-L' },
-  { id: '10699', name: 'Collet' },
-  { id: '10694', name: 'Doosan CNC' },
-  { id: '10692', name: 'Heckert' },
-  { id: '10700', name: 'Hyundai CNC Torna' },
-  { id: '10969', name: 'Hyundai Yatay İşleme' },
-  { id: '10766', name: 'Manuel Torna 1' },
-  { id: '10767', name: 'Manuel Torna 2' },
-  { id: '10768', name: 'Manuel Torna 3' },
-  { id: '10691', name: 'Schiess Froriep 1' },
-  { id: '10690', name: 'Schiess Froriep 2' },
-  { id: '10695', name: 'Toyoda Yatay' },
-];
+import { syncServerTime } from '../timeService.js';
+import { proxyBase } from '../base.js';
+import { filters } from '../globalVariables.js';
 
 async function loadAndRender(filterId) {
   const issues = await fetchIssuesByFilter(filterId);
@@ -40,8 +27,14 @@ function openTimer(issue, restoring = false) {
   setupTimerHandlers(issue, restoring);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   if (!state.userId) return (window.location.href = '/login');
+  
+  await syncServerTime();
+  
+  // Check if we have a task parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  
   setupMachineFilters(filters, loadAndRender);
   setupSearchInput();
   setupLogoutButton();
