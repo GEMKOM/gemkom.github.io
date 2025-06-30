@@ -1,2 +1,2 @@
-export const proxyBase = 'https://falling-bread-330e.ocalik.workers.dev/?url=';
-export const backendBase = 'https://falling-bread-330e.ocalik.workers.dev';
+export const proxyBase = 'https://gemkom-backend-716746493353.europe-west3.run.app/jira/proxy/?url=';
+export const backendBase = 'https://gemkom-backend-716746493353.europe-west3.run.app';

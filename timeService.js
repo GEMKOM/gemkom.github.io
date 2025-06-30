@@ -1,5 +1,5 @@
 import { backendBase } from './base.js';
-
+import { authedFetch } from './authService.js';
 let serverTimeOffset = 0;
 
 /**
@@ -7,13 +7,13 @@ let serverTimeOffset = 0;
  */
 export async function syncServerTime() {
   try {
-    const res = await fetch(`${backendBase}/now`);
-    const { now } = await res.json();
-    const localNow = Date.now();
-    serverTimeOffset = now - localNow;
-    console.log(`⏱ Server time offset: ${serverTimeOffset}ms`);
-  } catch (err) {
-    console.warn('⚠️ Failed to sync server time:', err);
+    const response = await authedFetch(`${backendBase}/now/`);
+    const data = await response.json();
+    const serverTime = data.now;
+    const clientTime = Date.now();
+    serverTimeOffset = serverTime - clientTime;
+  } catch (error) {
+    console.error('Failed to sync server time, using client time.', error);
     serverTimeOffset = 0;
   }
 }

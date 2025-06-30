@@ -1,12 +1,9 @@
 import { backendBase } from '../base.js';
 import { getSyncedNow } from '../timeService.js'
-export async function fetchUsers() {
-  const res = await fetch(`${backendBase}/user/list`);
-  return await res.json();
-}
+import { authedFetch } from '../authService.js';
 
 export async function fetchActiveTimers() {
-  const res = await fetch(`${backendBase}/active`);
+  const res = await authedFetch(`${backendBase}/machining/timers?is_active=true`);
   return await res.json();
 }
 

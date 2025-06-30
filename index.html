@@ -9,104 +9,15 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <style>
-        :root {
-            --primary-color: #8B0000;
-            --secondary-color: #DC143C;
-            --accent-color: #FF4D4D;
-            --text-color: #2c3e50;
-            --light-bg: #f8f9fa;
-        }
-
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        .navbar {
-            background-color: var(--primary-color);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .navbar-brand {
-            color: white !important;
-            font-weight: 600;
-        }
-
-        .nav-link {
-            color: rgba(255,255,255,0.9) !important;
-            transition: color 0.3s ease;
-        }
-
-        .nav-link:hover {
-            color: white !important;
-        }
-
-        .hero-section {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 4rem 0;
-            margin-bottom: 2rem;
-        }
-
-        .card {
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .btn-primary {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        footer {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 2rem 0;
-            margin-top: 3rem;
-        }
-    </style>
+    <link href="components/navbar.css" rel="stylesheet">
+    <link href="components/timerWidget.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="images/gemkom.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="pre-auth.css">
 </head>
-<body>
+<body class="pre-auth">
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">Gemkom</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Ana Sayfa</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Hakkımızda</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Hizmetler</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">İletişim</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn btn-outline-light ms-2" href="/login">Kişisel Giriş</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <div id="navbar-container"></div>
 
     <!-- Hero Section -->
     <section class="hero-section">
@@ -122,26 +33,35 @@
             <div class="col-md-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Hizmetlerimiz</h5>
-                        <p class="card-text">Profesyonel çözümler ve kaliteli hizmetler sunuyoruz.</p>
-                        <a href="#" class="btn btn-primary">Detaylı Bilgi</a>
+                        <h5 class="card-title">Talaşlı İmalat</h5>
+                        <p class="card-text">Talaşlı imalat işlemlerinizi görüntüleyin.</p>
+                        <a href="/machining" class="btn btn-primary">Görüntüle</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Projelerimiz</h5>
-                        <p class="card-text">Tamamladığımız başarılı projeleri keşfedin.</p>
-                        <a href="#" class="btn btn-primary">Projeleri Gör</a>
+                        <h5 class="card-title">Bakım</h5>
+                        <p class="card-text">Bakım işlemlerinizi görüntüleyin veya bakım talebi oluşturun.</p>
+                        <a href="/maintenance" class="btn btn-primary">Görüntüle</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h5 class="card-title">İletişim</h5>
-                        <p class="card-text">Bizimle iletişime geçin, size yardımcı olalım.</p>
+                        <h5 class="card-title">CNC Kesim</h5>
+                        <p class="card-text">CNC kesim işlemlerinizi görüntüleyin.</p>
+                        <a href="#" class="btn btn-primary">Görüntüle</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Geri Bildirim</h5>
+                        <p class="card-text">Gemkom hakkında geri bildirimleriniz için lütfen iletişime geçin.</p>
                         <a href="#" class="btn btn-primary">İletişime Geç</a>
                     </div>
                 </div>
@@ -158,5 +78,9 @@
 
     <!-- Bootstrap JS and Popper.js -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Navbar Component -->
+    <script type="module" src="main.js"></script>
+    <!-- Timer Widget -->
+    <script type="module" src="components/timerWidgetInit.js"></script>
 </body>
 </html>
