@@ -2,7 +2,7 @@
 // Entry point for admin page - only DOM event listeners and authentication
 
 import { initNavbar } from '../components/navbar.js';
-import { guardRoute, isAdmin, navigateTo, ROUTES } from '../authService.js';
+import { guardRoute, isAdmin, isLead, navigateTo, ROUTES } from '../authService.js';
 import { 
     setupAdminSidebar, 
     setupSidebarEventListeners, 
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
-    if (!isAdmin()) {
+    if (!isAdmin() && !isLead()) {
         navigateTo(ROUTES.HOME);
         return;
     }

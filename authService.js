@@ -85,6 +85,15 @@ export function isAdmin() {
     }
 }
 
+export function isLead() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user) { 
+        return user?.is_lead;
+    } else {
+        return false;
+    }
+}
+
 // Soft reload function - updates state without full page reload
 export function softReload() {
     console.log('Soft reload triggered');

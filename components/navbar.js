@@ -1,6 +1,7 @@
 import { logout, isAdmin, isLoggedIn, getUser, navigateTo, ROUTES } from '../authService.js';
 import { backendBase } from '../base.js';
 import { authedFetch } from '../authService.js';
+import { isLead } from '../authService.js';
 
 // Navbar component
 export function createNavbar() {
@@ -64,7 +65,7 @@ export function createNavbar() {
 
     // Show admin tab if user is admin (sync)
     const adminTab = navbar.querySelector('.admin-only');
-    if (isAdmin()) {
+    if (isAdmin() || isLead()) {
         adminTab.style.display = 'block';
     } else {
         adminTab.style.display = 'none';
@@ -222,7 +223,7 @@ export function initNavbar() {
       });
       // Show admin tab if user is admin (sync)
       const adminTab = navbarContainer.querySelector('.admin-only');
-      if (isAdmin()) {
+      if (isAdmin() || isLead()) {
           adminTab.style.display = 'block';
       } else {
           adminTab.style.display = 'none';

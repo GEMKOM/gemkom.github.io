@@ -10,6 +10,7 @@ import { showMachineList } from './machineList.js';
 import { showJiraSettings } from './jiraSettings.js';
 import { showMesaiTaleplerim } from './mesaiTaleplerim.js';
 import { showBulkUserCreateForm } from './bulkUserCreate.js';
+import { isAdmin, isLead } from '../authService.js';
 
 export function handleSidebarClick(label, callback) {
     return (e) => {
@@ -23,13 +24,20 @@ export function setupAdminSidebar(sidebarRoot) {
     if (!sidebarRoot) return null;
     
     const sidebar = new Sidebar(sidebarRoot);
-    sidebar.addItem('Özet');
-    sidebar.addItem('Kullanıcılar', { subItems: ['Kullanıcı Ekle', 'Kullanıcı Listesi', 'Çoklu Kullanıcı Ekle'] });
-    sidebar.addItem('Mesailer', { subItems: ['Mesai Talebi Gönder', 'Mesai Taleplerim'] });
-    sidebar.addItem('Talaşlı İmalat', { subItems: ['Canlı Takip', 'Makine Listesi'] });
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (isAdmin()) {
+        sidebar.addItem('Özet');
+        sidebar.addItem('Kullanıcılar', { subItems: ['Kullanıcı Ekle', 'Kullanıcı Listesi', 'Çoklu Kullanıcı Ekle'] });
+        sidebar.addItem('Mesailer', { subItems: ['Mesai Talebi Gönder', 'Mesai Taleplerim'] });
+        sidebar.addItem('Talaşlı İmalat', { subItems: ['Canlı Takip', 'Makine Listesi'] });
+        sidebar.addItem('Ayarlar', { subItems: ['Jira Ayarları'] });
+    } else if (isLead() && user.team === 'machining') {
+        sidebar.addItem('Talaşlı İmalat', { subItems: ['Canlı Takip', 'Makine Listesi'] });
+    }
+    
     //sidebar.addItem('Kaynaklı İmalat', { subItems: ['Makine Ekle', 'Makine Listesi'] });
     //sidebar.addItem('CNC Kesim', { subItems: ['Makine Ekle', 'Machine Listesi'] });  
-    sidebar.addItem('Ayarlar', { subItems: ['Jira Ayarları'] });
+    
 
     return sidebar;
 }
