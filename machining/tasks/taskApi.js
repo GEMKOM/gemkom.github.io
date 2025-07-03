@@ -126,12 +126,13 @@ export async function logTimeToJira(started, elapsedSeconds, comment) {
 // FAULT REPORTING
 // ============================================================================
 
-export async function reportMachineFault(machineId, description) {
+export async function reportMachineFault(machineId, description, isBreaking) {
     const response = await authedFetch(`${backendBase}/machines/faults/`, {
         method: 'POST',
         body: JSON.stringify({
             machine: machineId,
-            description: description
+            description: description,
+            is_breaking: isBreaking
         })
     });
     

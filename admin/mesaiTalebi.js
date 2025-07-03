@@ -1,28 +1,36 @@
 import { authedFetch } from '../authService.js';
 import { proxyBase } from '../base.js';
+import { toJiraDateTimeLocal } from './mesaiTaleplerim.js'
 
 export async function showMesaiTalebiForm() {
     const mainContent = document.querySelector('.admin-main-content .container-fluid');
     if (!mainContent) return;
     mainContent.innerHTML = `
-    <div class="row justify-content-center mesai-talebi-form"><div class="col-12 col-md-8 col-lg-6"><div class="card"><div class="card-header"><h5 class="mb-0">Mesai Talebi Gönder</h5></div><div class="card-body"><form id="mesai-talebi-form"><div class="mb-3"><label for="departman" class="form-label">Departman</label><select class="form-select" id="departman" required><option value="">Departman seçiniz...</option><option value="İmalat">İmalat</option><option value="Planlama">Planlama</option><option value="Dış Atölyeler">Dış Atölyeler</option><option value="Satın Alma">Satın Alma</option><option value="Kalite Kontrol">Kalite Kontrol</option><option value="İnsan Kaynakları">İnsan Kaynakları</option><option value="Dizayn">Dizayn</option><option value="Proje Taahhüt">Proje Taahhüt</option><option value="Haddehane">Haddehane</option><option value="Dış Ticaret">Dış Ticaret</option><option value="Lojistik">Lojistik</option></select></div><div class="mb-3"><label for="start" class="form-label">Başlangıç Tarihi/Saati</label><input type="datetime-local" class="form-control" id="start" required></div><div class="mb-3"><label for="end" class="form-label">Bitiş Tarihi/Saati</label><input type="datetime-local" class="form-control" id="end" required></div><div class="mb-3"><label for="excel" class="form-label">Excel Dosyası</label><input type="file" class="form-control" id="excel" accept=".xlsx,.xlsm" required></div><button type="submit" class="btn btn-primary w-100" style="background-color: #cc0000; border-color: #cc0000;">Gönder</button><div id="mesai-talebi-error" class="text-danger mt-2" style="display:none;"></div><div id="mesai-talebi-success" class="text-success mt-2" style="display:none;"></div></form></div></div></div></div>
+    <div class="row justify-content-center mesai-talebi-form"><div class="col-12 col-md-8 col-lg-6"><div class="card"><div class="card-header"><h5 class="mb-0">Mesai Talebi Gönder</h5></div><div class="card-body"><form id="mesai-talebi-form"><div class="mb-3"><label for="start" class="form-label">Başlangıç Tarihi/Saati</label><input type="datetime-local" class="form-control" id="start" required></div><div class="mb-3"><label for="end" class="form-label">Bitiş Tarihi/Saati</label><input type="datetime-local" class="form-control" id="end" required></div><div class="mb-3"><label for="excel" class="form-label">Excel Dosyası</label><input type="file" class="form-control" id="excel" accept=".xlsx,.xlsm" required></div><button type="submit" class="btn btn-primary w-100" style="background-color: #cc0000; border-color: #cc0000;">Gönder</button><div id="mesai-talebi-error" class="text-danger mt-2" style="display:none;"></div><div id="mesai-talebi-success" class="text-success mt-2" style="display:none;"></div></form></div></div></div></div>
     `;
     document.getElementById('mesai-talebi-form').addEventListener('submit', handleMesaiTalebiSubmit);
 }
 
 async function handleMesaiTalebiSubmit(e) {
     e.preventDefault();
-    const departman = document.getElementById('departman').value;
+    const user = JSON.parse(localStorage.getItem('user'));
+    const departman = user.team_label;
     const start = document.getElementById('start').value;
     const end = document.getElementById('end').value;
     const file = document.getElementById('excel').files[0];
     const errorDiv = document.getElementById('mesai-talebi-error');
     const successDiv = document.getElementById('mesai-talebi-success');
+    const submitBtn = document.querySelector('#mesai-talebi-form button[type="submit"]');
+    submitBtn.disabled = true;
+    const originalBtnHtml = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Gönderiliyor...';
     errorDiv.style.display = 'none';
     successDiv.style.display = 'none';
     if (!departman || !start || !end || !file) {
         errorDiv.textContent = 'Tüm alanları doldurun ve dosya seçin.';
         errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
         return;
     }
     try {
@@ -49,6 +57,8 @@ async function handleMesaiTalebiSubmit(e) {
         if (!rows.length) {
             errorDiv.textContent = 'Excel dosyası boş veya okunamadı!';
             errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
             return;
         }
         // Prepare Epic (parent issue)
@@ -59,6 +69,8 @@ async function handleMesaiTalebiSubmit(e) {
             project: { key: projectKey },
             summary: epicSummary,
             issuetype: { name: 'Mesai Talebi' },
+            "customfield_11172": toJiraDateTimeLocal(start),
+            "customfield_11173": toJiraDateTimeLocal(end)
             // Add custom fields as needed
         };
         const epicRes = await authedFetch(proxyBase + encodeURIComponent(`${jiraBaseUrl}/rest/api/3/issue`), {
@@ -69,6 +81,8 @@ async function handleMesaiTalebiSubmit(e) {
         if (!epicRes.ok) {
             errorDiv.textContent = 'Epic oluşturulamadı!';
             errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
             return;
         }
         const epicData = await epicRes.json();
@@ -82,11 +96,11 @@ async function handleMesaiTalebiSubmit(e) {
                 summary: row['İsim'],
                 issuetype: { name: 'Çalışan' },
                 parent: { key: epicKey },
-                "customfield_10117": row['İş Emri Numarası'],
+                "customfield_10117": String(row['İş Emri Numarası']),
                 "customfield_11167": departman,
                 "customfield_11170": row['Görev'],
-                "customfield_11172": start,
-                "customfield_11173": end,
+                "customfield_11172": toJiraDateTimeLocal(start),
+                "customfield_11173": toJiraDateTimeLocal(end),
                 "description": {
                         "content": [
                             {
@@ -117,4 +131,6 @@ async function handleMesaiTalebiSubmit(e) {
         errorDiv.textContent = 'Bir hata oluştu. Lütfen tekrar deneyin.';
         errorDiv.style.display = 'block';
     }
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnHtml;
 } 

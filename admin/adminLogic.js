@@ -11,6 +11,8 @@ import { showJiraSettings } from './jiraSettings.js';
 import { showMesaiTaleplerim } from './mesaiTaleplerim.js';
 import { showBulkUserCreateForm } from './bulkUserCreate.js';
 import { isAdmin, isLead } from '../authService.js';
+import { showMachiningDetailedReport } from './machiningDetailedReport.js';
+import { showFinishedTimers } from './finishedTimers.js';
 
 export function handleSidebarClick(label, callback) {
     return (e) => {
@@ -29,10 +31,10 @@ export function setupAdminSidebar(sidebarRoot) {
         sidebar.addItem('Özet');
         sidebar.addItem('Kullanıcılar', { subItems: ['Kullanıcı Ekle', 'Kullanıcı Listesi', 'Çoklu Kullanıcı Ekle'] });
         sidebar.addItem('Mesailer', { subItems: ['Mesai Talebi Gönder', 'Mesai Taleplerim'] });
-        sidebar.addItem('Talaşlı İmalat', { subItems: ['Canlı Takip', 'Makine Listesi'] });
+        sidebar.addItem('Talaşlı İmalat', { subItems: ['Aktif Zamanlayıcılar', 'Biten Zamanlayıcılar', 'Detaylı Rapor', 'Makine Listesi'] });
         sidebar.addItem('Ayarlar', { subItems: ['Jira Ayarları'] });
     } else if (isLead() && user.team === 'machining') {
-        sidebar.addItem('Talaşlı İmalat', { subItems: ['Canlı Takip', 'Makine Listesi'] });
+        sidebar.addItem('Talaşlı İmalat', { subItems: ['Aktif Zamanlayıcılar', 'Makine Listesi'] });
     }
     
     //sidebar.addItem('Kaynaklı İmalat', { subItems: ['Makine Ekle', 'Makine Listesi'] });
@@ -63,9 +65,9 @@ export function setupSidebarEventListeners() {
         mesaiTalebiItem.addEventListener('click', handleSidebarClick('Mesai Talebi Gönder', showMesaiTalebiForm));
     }
 
-    const canliTakipItem = Array.from(document.querySelectorAll('.sidebar-subitem')).find(el => el.textContent.trim() === 'Canlı Takip');
+    const canliTakipItem = Array.from(document.querySelectorAll('.sidebar-subitem')).find(el => el.textContent.trim() === 'Aktif Zamanlayıcılar');
     if (canliTakipItem) {
-        canliTakipItem.addEventListener('click', handleSidebarClick('Canlı Takip', showMachiningLiveReport));
+        canliTakipItem.addEventListener('click', handleSidebarClick('Aktif Zamanlayıcılar', showMachiningLiveReport));
     }
 
     const makineListesiItem = Array.from(document.querySelectorAll('.sidebar-subitem')).find(el => el.textContent.trim() === 'Makine Listesi');
@@ -83,6 +85,16 @@ export function setupSidebarEventListeners() {
     if (mesaiTaleplerimItem) {
         mesaiTaleplerimItem.addEventListener('click', handleSidebarClick('Mesai Taleplerim', showMesaiTaleplerim));
     }
+
+    const detayliRaporItem = Array.from(document.querySelectorAll('.sidebar-subitem')).find(el => el.textContent.trim() === 'Detaylı Rapor');
+    if (detayliRaporItem) {
+        detayliRaporItem.addEventListener('click', handleSidebarClick('Detaylı Rapor', showMachiningDetailedReport));
+    }
+
+    const finishedTimersItem = Array.from(document.querySelectorAll('.sidebar-subitem')).find(el => el.textContent.trim() === 'Biten Zamanlayıcılar');
+    if (finishedTimersItem) {
+        finishedTimersItem.addEventListener('click', handleSidebarClick('Biten Zamanlayıcılar', showFinishedTimers));
+    }
 }
 
 export function restoreLastView() {
@@ -94,9 +106,11 @@ export function restoreLastView() {
             case 'Çoklu Kullanıcı Ekle': showBulkUserCreateForm(); break;
             case 'Mesai Talebi Gönder': showMesaiTalebiForm(); break;
             case 'Mesai Taleplerim': showMesaiTaleplerim(); break;
-            case 'Canlı Takip': showMachiningLiveReport(); break;
+            case 'Aktif Zamanlayıcılar': showMachiningLiveReport(); break;
             case 'Makine Listesi': showMachineList(); break;
             case 'Jira Ayarları': showJiraSettings(); break;
+            case 'Detaylı Rapor': showMachiningDetailedReport(); break;
+            case 'Biten Zamanlayıcılar': showFinishedTimers(); break;
             // Add more as needed
             default: break;
         }

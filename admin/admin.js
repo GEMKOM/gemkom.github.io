@@ -9,6 +9,8 @@ import {
     restoreLastView, 
     showWelcomeMessage 
 } from './adminLogic.js';
+import './machiningDetailedReport.js';
+import './finishedTimers.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Check authentication and admin status

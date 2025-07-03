@@ -200,6 +200,7 @@ export function createFaultReportModal() {
     const submitBtn = document.getElementById('fault-modal-submit');
     const cancelBtn = document.getElementById('fault-modal-cancel');
     const closeBtn = document.getElementById('fault-modal-close');
+    const isBreakingCheckbox = document.getElementById('is-operable');
     
     // Show modal
     modal.style.display = 'flex';
@@ -209,18 +210,21 @@ export function createFaultReportModal() {
         function closeModal() {
             modal.style.display = 'none';
             descriptionTextarea.value = '';
+            isBreakingCheckbox.checked = true;
             resolve();
         }
         
         submitBtn.onclick = async () => {
-            if (!confirm("Arıza kaydı oluşturmak istediğinize emin misiniz? Makine kullanıma kapatılacaktır.")) {
-                closeModal();
-                return;
-            }
-            
-            if (!confirm("Bildireceğiniz arıza makinenin çalışmasına engel değilse lütfen kaydınızı yukarıdaki bakım bölümünden oluşturunuz. Emin misiniz?")) {
-                closeModal();
-                return;
+            if (!isBreakingCheckbox.checked) {
+                if (!confirm("Arıza kaydı oluşturmak istediğinize emin misiniz? Makine kullanıma kapatılacaktır.")) {
+                    closeModal();
+                    return;
+                }
+                
+                if (!confirm("Bildireceğiniz arıza makinenin çalışmasına engel değilse lütfen 'Makine çalışır durumda' kutucuğunu işaretleyiniz. Emin misiniz?")) {
+                    closeModal();
+                    return;
+                }
             }
             
             const description = descriptionTextarea.value.trim();
@@ -244,7 +248,7 @@ export function createFaultReportModal() {
                 }
                 
                 // Send fault report
-                const success = await reportMachineFault(machineId, description);
+                const success = await reportMachineFault(machineId, description, !isBreakingCheckbox.checked);
                 
                 if (success) {
                     alert('Arıza bildirimi başarıyla gönderildi.');

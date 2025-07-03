@@ -30,9 +30,11 @@ export async function showMesaiTaleplerim() {
         return text.trim();
     }
     const user = JSON.parse(localStorage.getItem('user'));
-
+    let jql = `project=MES AND Departman~"${user.team_label}" AND (parent is not EMPTY) ORDER BY created DESC`;
+    if (user.is_superuser){
+      jql = `project=MES AND (parent is not EMPTY) ORDER BY created DESC`
+    }
     // 1. Fetch all MES epics and their stories for current user
-    const jql = `project=MES AND Departman~"${user.team_label}" AND (parent is not EMPTY) ORDER BY created DESC`;
     const fields = 'summary,description,key,issuetype,parent,customfield_11172,customfield_11173,customfield_11167,customfield_10117,customfield_11170';
     const jiraUrl = `${JIRA_BASE}/rest/api/3/search?jql=${encodeURIComponent(jql)}&fields=${encodeURIComponent(fields)}&maxResults=5000`;
     const url = proxyBase + encodeURIComponent(jiraUrl);
@@ -190,4 +192,8 @@ function formatDateTime(dt) {
     const d = new Date(dt);
     if (isNaN(d)) return '-';
     return d.toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' });
-} 
+}
+
+export function toJiraDateTimeLocal(dateStr) {
+  return `${dateStr}:00.000+0300`; // Assuming "2024-06-01T17:00"
+}
