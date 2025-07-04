@@ -13,6 +13,7 @@ import { showBulkUserCreateForm } from './bulkUserCreate.js';
 import { isAdmin, isLead } from '../authService.js';
 import { showMachiningDetailedReport } from './machiningDetailedReport.js';
 import { showFinishedTimers } from './finishedTimers.js';
+import { showActiveTasksSection } from './activeTasks.js';
 
 export function handleSidebarClick(label, callback) {
     return (e) => {
@@ -31,7 +32,7 @@ export function setupAdminSidebar(sidebarRoot) {
         sidebar.addItem('Özet');
         sidebar.addItem('Kullanıcılar', { subItems: ['Kullanıcı Ekle', 'Kullanıcı Listesi', 'Çoklu Kullanıcı Ekle'] });
         sidebar.addItem('Mesailer', { subItems: ['Mesai Talebi Gönder', 'Mesai Taleplerim'] });
-        sidebar.addItem('Talaşlı İmalat', { subItems: ['Aktif Zamanlayıcılar', 'Biten Zamanlayıcılar', 'Detaylı Rapor', 'Makine Listesi'] });
+        sidebar.addItem('Talaşlı İmalat', { subItems: ['Aktif Zamanlayıcılar', 'Aktif İşler', 'Tamamlanmış İşler', 'Biten Zamanlayıcılar', 'Detaylı Rapor', 'Makine Listesi'] });
         sidebar.addItem('Ayarlar', { subItems: ['Jira Ayarları'] });
     } else if (isLead() && user.team === 'machining') {
         sidebar.addItem('Talaşlı İmalat', { subItems: ['Aktif Zamanlayıcılar', 'Biten Zamanlayıcılar', 'Makine Listesi'] });
@@ -97,6 +98,11 @@ export function setupSidebarEventListeners() {
     if (finishedTimersItem) {
         finishedTimersItem.addEventListener('click', handleSidebarClick('Biten Zamanlayıcılar', showFinishedTimers));
     }
+
+    const aktifIslerItem = Array.from(document.querySelectorAll('.sidebar-subitem')).find(el => el.textContent.trim() === 'Aktif İşler');
+    if (aktifIslerItem) {
+        aktifIslerItem.addEventListener('click', handleSidebarClick('Aktif İşler', showActiveTasksSection));
+    }
 }
 
 export function restoreLastView() {
@@ -113,6 +119,7 @@ export function restoreLastView() {
             case 'Jira Ayarları': showJiraSettings(); break;
             case 'Detaylı Rapor': showMachiningDetailedReport(); break;
             case 'Biten Zamanlayıcılar': showFinishedTimers(); break;
+            case 'Aktif İşler': showActiveTasksSection(); break;
             // Add more as needed
             default: break;
         }
