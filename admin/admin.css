@@ -1,3 +1,11 @@
+:root {
+    --primary-color: #8B0000;
+    --secondary-color: #b40024;
+    --text-color: #333;
+    --light-bg: #f9f9f9;
+}
+
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
@@ -114,15 +122,7 @@ th {
     display: flex;
     flex-direction: column;
 }
-@media (max-width: 767.98px) {
-    #admin-flex-layout {
-        flex-direction: column;
-    }
-    #sidebar-root, .admin-main-content {
-        width: 100vw;
-        min-width: 0;
-    }
-}
+
 
 .user-create-form .card {
     border-radius: 12px;

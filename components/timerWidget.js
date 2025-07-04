@@ -195,7 +195,9 @@ export class TimerWidget {
 
     async loadActiveTimers() {
         try {
-            const response = await authedFetch(`${backendBase}/machining/timers?is_active=true`);
+            const now = new Date();
+            const startAfter = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(); // 24 hours ago in ISO format
+            const response = await authedFetch(`${backendBase}/machining/timers/?is_active=true`);
             if (response.ok) {
                 this.activeTimers = await response.json();
                 return true;
@@ -345,7 +347,9 @@ export class TimerWidget {
             }
             
             try {
-                const response = await authedFetch(`${backendBase}/machining/timers?is_active=true`);
+                const now = Date.now(); // milliseconds
+                const startAfterTs = Math.floor((now - 24 * 60 * 60 * 1000) / 1000); // 24 hours ago, in seconds
+                const response = await authedFetch(`${backendBase}/machining/timers/?start_after=${startAfterTs}`);
                 if (response.ok) {
                     const latestTimers = await response.json();
                     // Get current user information
@@ -365,10 +369,10 @@ export class TimerWidget {
                                 if (latest && (latest.stopped_by_first_name || latest.stopped_by_last_name)) {
                                     name = `${latest.stopped_by_first_name || ''} ${latest.stopped_by_last_name || ''}`.trim();
                                 }
-                                if (window.confirm(`Zamanlayıcı ${name} tarafından durduruldu. Sayfa yenilensin mi?`)) {
-                                    window.location.reload();
-                                    break;
-                                }
+                                // Automatically reload the page without confirmation
+                                alert(`Zamanlayıcı ${name} tarafından durduruldu. Sayfa yenileniyor...`);
+                                window.location.reload();
+                                break;
                             }
                         }
                     }
@@ -376,7 +380,7 @@ export class TimerWidget {
             } catch (error) {
                 console.error('Error polling user timers:', error);
             }
-        }, 5000);
+        }, 6000);
     }
 
     async reloadActiveTimers() {

@@ -94,6 +94,15 @@ export async function markTaskAsDone() {
         })
     });
     
+    // Also notify backend to set completed_by and completion_date
+    authedFetch(`${backendBase}/machining/tasks/mark-completed/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            key: state.currentIssueKey
+        })
+    });
+    
     return response.ok;
 }
 

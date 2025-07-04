@@ -93,6 +93,13 @@ function setupMachiningTableEventListeners() {
 
 async function handleSaveToJira(timerId) {
     const finishTime = getSyncedNow();
+    // Find the timer object by timerId
+    const timer = state.activeTimers.find(t => t.id == timerId);
+    if (!timer) {
+        alert('Timer bulunamadı!');
+        return;
+    }
+
     // 1. Stop timer with syncToJira=true
     const stopped = await stopTimerShared({ timerId, finishTime, syncToJira: true });
     if (!stopped) {
@@ -100,7 +107,7 @@ async function handleSaveToJira(timerId) {
     }
     // 2. Log to Jira
     let elapsedSeconds = Math.round((finishTime - timer.start_time) / 1000);
-    elapsedSeconds = Math.max(elapsedSeconds, 60)
+    elapsedSeconds = Math.max(elapsedSeconds, 60);
 
     const logged = await logTimeToJiraShared({ issueKey: timer.issue_key, baseUrl: 'https://gemkom-1.atlassian.net', startTime: timer.start_time, elapsedSeconds });
     if (logged) {

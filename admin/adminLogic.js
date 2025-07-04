@@ -34,7 +34,9 @@ export function setupAdminSidebar(sidebarRoot) {
         sidebar.addItem('Talaşlı İmalat', { subItems: ['Aktif Zamanlayıcılar', 'Biten Zamanlayıcılar', 'Detaylı Rapor', 'Makine Listesi'] });
         sidebar.addItem('Ayarlar', { subItems: ['Jira Ayarları'] });
     } else if (isLead() && user.team === 'machining') {
-        sidebar.addItem('Talaşlı İmalat', { subItems: ['Aktif Zamanlayıcılar', 'Makine Listesi'] });
+        sidebar.addItem('Talaşlı İmalat', { subItems: ['Aktif Zamanlayıcılar', 'Biten Zamanlayıcılar', 'Makine Listesi'] });
+    } else if (!isLead() && user.team === 'machining'){
+        sidebar.addItem('Talaşlı İmalat', { subItems: ['Biten Zamanlayıcılar'] });
     }
     
     //sidebar.addItem('Kaynaklı İmalat', { subItems: ['Makine Ekle', 'Makine Listesi'] });
