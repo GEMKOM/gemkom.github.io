@@ -1,19 +1,17 @@
 import { updateActiveTimers, updateMachines } from './adminView.js';
 import { fetchMachinesForMachining } from '../machining/machiningService.js';
-import { state } from './adminState.js';
 import { getSyncedNow } from '../timeService.js';
 import { stopTimerShared, logTimeToJiraShared } from '../machining/machiningService.js';
 import { TimerWidget } from '../components/timerWidget.js';
+import { authedFetch } from '../authService.js';
 
 export async function showMachiningLiveReport() {
     const mainContent = document.querySelector('.admin-main-content .container-fluid');
     if (!mainContent) return;
-    if (state.machines.length === 0){
-        state.machines = await fetchMachinesForMachining();
-    }
+    const machines = await fetchMachinesForMachining();
     mainContent.innerHTML = `
         <div class="d-flex justify-content-end mb-3">
-            <button id="refresh-btn" class="btn btn-primary">⟳ Yenile</button>
+            <button id="refresh-btn" class="btn btn-primary"> ⟳ Yenile</button>
         </div>
         <div class="row">
             <div class="col-md-6">
@@ -91,10 +89,18 @@ function setupMachiningTableEventListeners() {
     });
 }
 
+async function fetchActiveTimerById(timerId) {
+    // Fetch all active timers and find the one with the given ID
+    const res = await authedFetch(`/machining/timers?is_active=true`);
+    if (!res.ok) return null;
+    const timers = await res.json();
+    return timers.find(t => t.id == timerId);
+}
+
 async function handleSaveToJira(timerId) {
     const finishTime = getSyncedNow();
-    // Find the timer object by timerId
-    const timer = state.activeTimers.find(t => t.id == timerId);
+    // Fetch the timer object by timerId
+    const timer = await fetchActiveTimerById(timerId);
     if (!timer) {
         alert('Timer bulunamadı!');
         return;

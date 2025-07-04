@@ -1,20 +1,20 @@
 // --- adminView.js ---
 import { fetchActiveTimers, formatDuration } from './adminService.js';
-import { state } from './adminState.js';
 import { getSyncedNow, syncServerTime } from '../timeService.js';
 import { backendBase } from '../base.js';
+import { authedFetch } from '../authService.js';
 
 let timerIntervals = {};
 
 export async function updateActiveTimers() {
-    state.activeTimers = await fetchActiveTimers();
-    if (state.activeTimers.length > 0){
+    const activeTimers = await fetchActiveTimers();
+    if (activeTimers.length > 0){
         await syncServerTime();
     }
     const tbody = document.getElementById('active-timers');
     tbody.innerHTML = '';
 
-    state.activeTimers.filter(t => !t.finish_time).forEach(t => {
+    activeTimers.forEach(t => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${t.username}</td>
@@ -53,10 +53,15 @@ function startTimerInterval(timerId, startTime) {
 export async function updateMachines() {
     const tbody = document.getElementById('machines-list');
     tbody.innerHTML = '';
-    state.machines.forEach(u => {
-        const match = state.activeTimers.find(t => t.machine === u.name);
-        const isActive = !!match;
-        const badge = `<span class="badge rounded-pill ${isActive ? 'bg-success' : 'bg-danger'}">${isActive ? 'Aktif' : 'Pasif'}</span>`;
+    // Fetch machines directly from the backend
+    const res = await authedFetch(`${backendBase}/machines`);
+    if (!res.ok) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-danger text-center">Makine verileri alınamadı</td></tr>`;
+        return;
+    }
+    const machines = await res.json();
+    machines.forEach(u => {
+        const badge = `<span class="badge rounded-pill ${u.has_active_timer ? 'bg-success' : 'bg-danger'}">${u.has_active_timer ? 'Aktif' : 'Pasif'}</span>`;
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${u.name}</td>

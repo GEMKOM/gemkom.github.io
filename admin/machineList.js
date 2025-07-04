@@ -1,5 +1,4 @@
 import { fetchMachinesForMachining } from "../machining/machiningService.js";
-import { state } from "./adminState.js";
 
 export async function showMachineList() {
     const mainContent = document.querySelector('.admin-main-content .container-fluid');
@@ -31,10 +30,7 @@ export async function showMachineList() {
         </div>
     `;
     try {
-        if (state.machines.length === 0){
-            state.machines = await fetchMachinesForMachining();
-        }
-        const machines = state.machines;
+        const machines = await fetchMachinesForMachining();
         const tableHtml = `
             <table class="table table-bordered">
                 <thead>

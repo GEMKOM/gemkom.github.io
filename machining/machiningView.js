@@ -52,25 +52,17 @@ export function renderTaskList(issues, openTimerCallback) {
 export async function setupMachineFilters(onClick) {
   const select = document.getElementById('filter-select');
   select.innerHTML = '<option value="">Seçiniz...</option>'; // Reset options with placeholder
-  
-  // Fetch both machines and active timers
-  const [machines, activeTimersResponse] = await Promise.all([
-    fetchMachinesForMachining(),
-    authedFetch(`${backendBase}/machining/timers?is_active=true`)
-  ]);
-  
-  const activeTimers = activeTimersResponse.ok ? await activeTimersResponse.json() : [];
-  
+
+  // Fetch only machines (no need to fetch active timers)
+  const machines = await fetchMachinesForMachining();
+
   machines.forEach(f => {
     const option = document.createElement('option');
     option.value = f.jira_id; // Keep jira_id for filter functionality
     option.dataset.machineId = f.id; // Store the actual machine id in data attribute
- 
-    
-    // Check if this machine has an active timer
-    const isActive = activeTimers.some(t => t.machine === f.name);
-    
-    if (isActive) {
+
+    // Use has_active_timer property
+    if (f.has_active_timer) {
       option.textContent = `${f.name} (Kullanımda)`;
       option.disabled = true;
       option.style.color = '#6b7280';
@@ -78,12 +70,12 @@ export async function setupMachineFilters(onClick) {
     } else if(f.is_under_maintenance) {
       option.textContent = `${f.name} (Bakımda)`;
       option.disabled = true;
-      option.style.color = '#6b7280';
+      option.style.color = '#dc2626';
       option.style.fontStyle = 'italic';
     } else {
       option.textContent = f.name;
     }
-    
+
     select.appendChild(option);
   });
 
