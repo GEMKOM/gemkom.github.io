@@ -2,6 +2,19 @@
 import { backendBase } from "../base.js";
 import { authedFetch } from "../authService.js";
 
+async function fetchUsersForMachining() {
+    // Adjust endpoint if needed
+    const resp = await authedFetch(`${backendBase}/users?team=machining`);
+    if (!resp.ok) return [];
+    return await resp.json();
+}
+
+async function fetchMachinesForMachining() {
+    const resp = await authedFetch(`${backendBase}/machines?used_in=machining`);
+    if (!resp.ok) return [];
+    return await resp.json();
+}
+
 export function showMachiningDetailedReport() {
     const mainContent = document.querySelector('.admin-main-content .container-fluid');
     if (!mainContent) return;
@@ -94,24 +107,47 @@ export function showMachiningDetailedReport() {
         const container = document.getElementById('detailed-report-table-container');
         container.innerHTML = '<div>Yükleniyor...</div>';
         try {
+            // Fetch report data
             const resp = await authedFetch(url);
             if (!resp.ok) throw new Error('Rapor alınamadı');
             const data = await resp.json();
-            if (!Array.isArray(data) || data.length === 0) {
-                container.innerHTML = '<div>Sonuç bulunamadı.</div>';
-                return;
-            }
-            // Render table
+            let mergedData = [];
             let groupLabel = 'Grup';
-            if (groupBy === 'user') groupLabel = 'Kullanıcı';
-            else if (groupBy === 'machine') groupLabel = 'Makine';
-            else if (groupBy === 'job_no') groupLabel = 'İş No';
-            else if (groupBy === 'issue_key') groupLabel = 'TI Numarası';
+            if (groupBy === 'user') {
+                groupLabel = 'Kullanıcı';
+                const users = await fetchUsersForMachining();
+                mergedData = users.map(user => {
+                    const found = data.find(row => row.group === user.username);
+                    return {
+                        group: user.display_name || user.username || user.id,
+                        total_hours: found ? found.total_hours : 0
+                    };
+                });
+            } else if (groupBy === 'machine') {
+                groupLabel = 'Makine';
+                const machines = await fetchMachinesForMachining();
+                mergedData = machines.map(machine => {
+                    const found = data.find(row => row.group === machine.name);
+                    return {
+                        group: machine.name || machine.id,
+                        total_hours: found ? found.total_hours : 0
+                    };
+                });
+            } else {
+                // Default: use data as is
+                mergedData = data.map(row => ({
+                    group: Object.values(row)[0],
+                    total_hours: row.total_hours || 0
+                }));
+                if (groupBy === 'job_no') groupLabel = 'İş No';
+                else if (groupBy === 'issue_key') groupLabel = 'TI Numarası';
+            }
+            // Order by hours descending
+            mergedData.sort((a, b) => b.total_hours - a.total_hours);
+            // Render table
             let html = `<div class="table-responsive"><table class="table table-bordered"><thead><tr><th>${groupLabel}</th><th>Saat (Toplam)</th></tr></thead><tbody>`;
-            for (const row of data) {
-                const key = Object.values(row)[0];
-                const hours = (row.total_hours || 0).toFixed(2);
-                html += `<tr><td>${key}</td><td>${hours}</td></tr>`;
+            for (const row of mergedData) {
+                html += `<tr><td>${row.group}</td><td>${(row.total_hours || 0).toFixed(2)}</td></tr>`;
             }
             html += '</tbody></table></div>';
             container.innerHTML = html;

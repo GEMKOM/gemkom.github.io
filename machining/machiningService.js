@@ -111,9 +111,12 @@ export async function stopTimerShared({ timerId, finishTime, syncToJira }) {
  * @param {string} [params.comment]
  * @returns {Promise<boolean>}
  */
-export async function logTimeToJiraShared({ issueKey, baseUrl, startTime, elapsedSeconds, comment }) {
+export async function logTimeToJiraShared({ startTime, elapsedSeconds, comment, issueKey=null }) {
+    if (!issueKey){
+      issueKey = state.currentIssueKey;
+    }
     const started = formatJiraDate(startTime);
-    const url = `${baseUrl}/rest/api/3/issue/${issueKey}/worklog`;
+    const url = `${state.base}/rest/api/3/issue/${issueKey}/worklog`;
     const response = await authedFetch(proxyBase + encodeURIComponent(url), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

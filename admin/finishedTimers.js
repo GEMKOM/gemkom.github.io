@@ -10,7 +10,7 @@ export function showFinishedTimers() {
         { key: 'username', label: 'Kullanıcı' },
         { key: 'issue_key', label: 'TI No' },
         { key: 'job_no', label: 'İş No' },
-        { key: 'machine', label: 'Makine' },
+        { key: 'machine_name', label: 'Makine' },
         { key: 'start_time', label: 'Başlangıç' },
         { key: 'finish_time', label: 'Bitiş' },
         { key: 'duration', label: 'Süre (saat)' },
@@ -24,7 +24,7 @@ export function showFinishedTimers() {
         { key: 'id', label: 'ID' },
     ];
     // Default columns
-    const defaultColumns = ['username', 'issue_key', 'job_no', 'machine', 'start_time', 'finish_time', 'duration'];
+    const defaultColumns = ['username', 'issue_key', 'job_no', 'machine_name', 'start_time', 'finish_time', 'duration'];
 
     // Load column selection from localStorage or use default
     let selectedColumns = [];
@@ -106,6 +106,16 @@ export function showFinishedTimers() {
             }
             saveColumns(selectedColumns);
             document.getElementById('fetch-finished-timers-btn').click();
+        });
+    });
+
+    // Add Enter key support for all filter inputs
+    document.querySelectorAll('#finished-timers-filters input, #finished-timers-filters select').forEach(input => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('fetch-finished-timers-btn').click();
+            }
         });
     });
 
@@ -214,7 +224,7 @@ export function showFinishedTimers() {
                 });
             });
             container.querySelectorAll('.edit-timer-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', async (e) => {
                     const id = btn.getAttribute('data-id');
                     const timer = data.find(r => r.id == id);
                     if (!timer) return;
@@ -225,7 +235,17 @@ export function showFinishedTimers() {
                     document.getElementById('edit-quantity').value = timer.quantity || '';
                     document.getElementById('edit-comment').value = timer.comment || '';
                     document.getElementById('edit-manual_entry').checked = !!timer.manual_entry;
-                    document.getElementById('edit-machine').value = timer.machine || '';
+                    // Fetch and populate machines
+                    const machineSelect = document.getElementById('edit-machine');
+                    machineSelect.innerHTML = '<option>Yükleniyor...</option>';
+                    try {
+                        const machines = await import('../machining/machiningService.js').then(m => m.fetchMachinesForMachining());
+                        machineSelect.innerHTML = machines.map(machine =>
+                            `<option value="${machine.id}"${machine.id == timer.machine_fk ? ' selected' : ''}>${machine.name || ''}</option>`
+                        ).join('');
+                    } catch (err) {
+                        machineSelect.innerHTML = '<option>Makine listesi alınamadı</option>';
+                    }
                     document.getElementById('edit-finish_time').value = timer.finish_time ? toLocalDatetimeInput(timer.finish_time) : '';
                     // Show modal
                     const modal = new bootstrap.Modal(document.getElementById('edit-timer-modal'));
@@ -241,7 +261,7 @@ export function showFinishedTimers() {
                     quantity: parseInt(document.getElementById('edit-quantity').value) || null,
                     comment: document.getElementById('edit-comment').value,
                     manual_entry: document.getElementById('edit-manual_entry').checked,
-                    machine: document.getElementById('edit-machine').value,
+                    machine_fk: document.getElementById('edit-machine').value,
                     finish_time: document.getElementById('edit-finish_time').value ? new Date(document.getElementById('edit-finish_time').value).getTime() : null,
                 };
                 try {
@@ -315,7 +335,7 @@ export function showFinishedTimers() {
                   <div class="mb-2"><label class="form-label">Adet</label><input type="number" class="form-control" id="edit-quantity"></div>
                   <div class="mb-2"><label class="form-label">Yorum</label><input type="text" class="form-control" id="edit-comment"></div>
                   <div class="mb-2"><label class="form-label">Manuel Giriş</label> <input type="checkbox" id="edit-manual_entry"></div>
-                  <div class="mb-2"><label class="form-label">Makine</label><input type="text" class="form-control" id="edit-machine"></div>
+                  <div class="mb-2"><label class="form-label">Makine</label><select class="form-select" id="edit-machine"></select></div>
                   <div class="mb-2"><label class="form-label">Bitiş Zamanı</label><input type="datetime-local" class="form-control" id="edit-finish_time"></div>
                 </form>
               </div>

@@ -5,11 +5,11 @@ import { state, saveTimerState, stopTimerShared, logTimeToJiraShared } from '../
 import { syncServerTime, getSyncedNow } from '../../timeService.js';
 import { navigateTo, ROUTES } from '../../authService.js';
 import { startTimer, markTaskAsDone } from './taskApi.js';
-import { showManualTimeModal, createFaultReportModal } from './taskModals.js';
+import { showManualTimeModal, createFaultReportModal } from '../../components/taskTimerModals.js';
 import { setActiveTimerUI, setInactiveTimerUI, updateTimerDisplay } from './taskUI.js';
 import { performSoftReload } from './taskState.js';
 import { TimerWidget } from '../../components/timerWidget.js';
-import { checkMachineMaintenance } from './taskApi.js';
+import { checkMachineMaintenance, createManualTimeEntry } from './taskApi.js';
 
 // ============================================================================
 // MAINTENANCE CHECKING
@@ -97,8 +97,7 @@ async function handleStopTimer() {
         
         if (stopSuccess) {
             const logged = await logTimeToJiraShared({ 
-                issueKey: state.currentIssueKey, 
-                baseUrl: state.base, 
+                issueKey: state.currentIssueKey,
                 startTime: state.startTime, 
                 elapsedSeconds: elapsed 
             });
@@ -213,7 +212,7 @@ export function setupManualLogHandler() {
 async function handleManualLogClick() {
     if (await checkMaintenanceAndAlert()) return;
     
-    await showManualTimeModal();
+    await showManualTimeModal({createManualTimeEntry, logTimeToJiraShared});
 }
 
 export function setupFaultReportHandler() {

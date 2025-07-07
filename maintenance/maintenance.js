@@ -589,7 +589,7 @@ function setupMaintenanceRequestForm() {
     });
 }
 
-async function createMaintenanceRequest(requestData) {
+export async function createMaintenanceRequest(requestData) {
     const response = await authedFetch(`${backendBase}/machines/faults/`, {
         method: 'POST',
         headers: {

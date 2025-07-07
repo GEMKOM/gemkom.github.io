@@ -11,8 +11,46 @@ const columns = [
     { key: 'completion_date', label: 'Bitiş Tarihi' },
     { key: 'completed_by', label: 'Tamamlayan' },
     { key: 'status', label: 'Durum' },
+    { key: 'actions', label: '' },
 ];
 
+function buildTaskListQuery() {
+    let key = document.getElementById('key').value.trim();
+    const name = document.getElementById('name').value.trim();
+    const job_no = document.getElementById('job_no').value.trim();
+    const image_no = document.getElementById('image_no').value.trim();
+    const position_no = document.getElementById('position_no').value.trim();
+    const completed_by = document.getElementById('completed_by').value.trim();
+    const completion_date_gte = document.getElementById('completion_date_gte').value;
+    const completion_date_lte = document.getElementById('completion_date_lte').value;
+    const status = document.getElementById('status_filter').value;
+    let params = [];
+    // Accept numbers for TI Numarası and prepend 'TI-' if needed
+    if (key) {
+        if (/^\d+$/.test(key)) {
+            key = 'TI-' + key;
+        }
+        params.push(`key=${encodeURIComponent(key)}`);
+    }
+    if (name) params.push(`name=${encodeURIComponent(name)}`);
+    if (job_no) params.push(`job_no=${encodeURIComponent(job_no)}`);
+    if (image_no) params.push(`image_no=${encodeURIComponent(image_no)}`);
+    if (position_no) params.push(`position_no=${encodeURIComponent(position_no)}`);
+    if (completed_by) params.push(`completed_by=${encodeURIComponent(completed_by)}`);
+    if (completion_date_gte) {
+        const ts = new Date(completion_date_gte).getTime();
+        if (!isNaN(ts)) params.push(`completion_date__gte=${ts}`);
+    }
+    if (completion_date_lte) {
+        const ts = new Date(completion_date_lte).getTime();
+        if (!isNaN(ts)) params.push(`completion_date__lte=${ts}`);
+    }
+    if (status === 'active') params.push('completion_date__isnull=true');
+    if (status === 'completed') params.push('completion_date__isnull=false');
+    return params.length ? '?' + params.join('&') : '';
+}
+
+// Add Enter key support for all filter inputs
 export async function showTaskListSection() {
     const mainContent = document.querySelector('.admin-main-content .container-fluid');
     if (!mainContent) return;
@@ -79,36 +117,16 @@ export async function showTaskListSection() {
     });
     // Initial fetch
     document.getElementById('fetch-task-list-btn').click();
-}
 
-function buildTaskListQuery() {
-    const key = document.getElementById('key').value.trim();
-    const name = document.getElementById('name').value.trim();
-    const job_no = document.getElementById('job_no').value.trim();
-    const image_no = document.getElementById('image_no').value.trim();
-    const position_no = document.getElementById('position_no').value.trim();
-    const completed_by = document.getElementById('completed_by').value.trim();
-    const completion_date_gte = document.getElementById('completion_date_gte').value;
-    const completion_date_lte = document.getElementById('completion_date_lte').value;
-    const status = document.getElementById('status_filter').value;
-    let params = [];
-    if (key) params.push(`key=${encodeURIComponent(key)}`);
-    if (name) params.push(`name=${encodeURIComponent(name)}`);
-    if (job_no) params.push(`job_no=${encodeURIComponent(job_no)}`);
-    if (image_no) params.push(`image_no=${encodeURIComponent(image_no)}`);
-    if (position_no) params.push(`position_no=${encodeURIComponent(position_no)}`);
-    if (completed_by) params.push(`completed_by=${encodeURIComponent(completed_by)}`);
-    if (completion_date_gte) {
-        const ts = new Date(completion_date_gte).getTime();
-        if (!isNaN(ts)) params.push(`completion_date__gte=${ts}`);
-    }
-    if (completion_date_lte) {
-        const ts = new Date(completion_date_lte).getTime();
-        if (!isNaN(ts)) params.push(`completion_date__lte=${ts}`);
-    }
-    if (status === 'active') params.push('completion_date__isnull=true');
-    if (status === 'completed') params.push('completion_date__isnull=false');
-    return params.length ? '?' + params.join('&') : '';
+    // Add Enter key support for all filter inputs
+    document.querySelectorAll('#task-list-filters input, #task-list-filters select').forEach(input => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('fetch-task-list-btn').click();
+            }
+        });
+    });
 }
 
 async function renderTaskListTable() {
@@ -143,7 +161,12 @@ async function renderTaskListTable() {
                     val = row.key ? `<a href="https://gemkom-1.atlassian.net/browse/${row.key}" target="_blank">${row.key}</a>` : '';
                 } else if (col.key === 'completion_date') {
                     val = row.completion_date ? new Date(row.completion_date).toLocaleString('tr-TR') : '';
-                } else {
+                } else if (col.key === 'actions') {
+                    val = !row.completion_date ? `<button class="btn btn-sm btn-success mark-done-btn" data-key="${row.key}">Tamamlandı Olarak İşaretle</button>` : '';
+                } else if (col.key === 'completed_by'){
+                    val = row['completed_by_username'] ? row['completed_by_username'] : '';
+                }
+                else {
                     val = row[col.key] == null ? '' : row[col.key];
                 }
                 html += `<td>${val}</td>`;
@@ -152,6 +175,32 @@ async function renderTaskListTable() {
         }
         html += `</tbody></table></div>`;
         container.innerHTML = html;
+
+        // Add event listeners for mark as done buttons
+        container.querySelectorAll('.mark-done-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const key = btn.getAttribute('data-key');
+                btn.disabled = true;
+                btn.textContent = 'Gönderiliyor...';
+                try {
+                    const resp = await authedFetch(`${backendBase}/machining/tasks/mark-completed/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ key })
+                    });
+                    if (!resp.ok) throw new Error('İşaretleme başarısız');
+                    btn.textContent = 'Tamamlandı';
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-secondary');
+                    // Optionally refresh the table
+                    await renderTaskListTable();
+                } catch (err) {
+                    btn.disabled = false;
+                    btn.textContent = 'Tamamlandı Olarak İşaretle';
+                    alert('Hata: ' + err.message);
+                }
+            });
+        });
     } catch (err) {
         container.innerHTML = `<div class="text-danger">Hata: ${err.message}</div>`;
     }

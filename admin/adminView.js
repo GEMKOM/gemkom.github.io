@@ -18,7 +18,7 @@ export async function updateActiveTimers() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${t.username}</td>
-            <td>${t.machine}</td>
+            <td>${t.machine_name}</td>
             <td><a href="https://gemkom-1.atlassian.net/browse/${t.issue_key}" target="_blank">${t.issue_key}</a></td>
             <td id="timer-${t.id}">${formatDuration(t.start_time)}</td>
             <td>

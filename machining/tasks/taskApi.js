@@ -3,7 +3,7 @@
 
 import { state } from '../machiningService.js';
 import { proxyBase, backendBase } from '../../base.js';
-import { authedFetch } from '../../authService.js';
+import { authedFetch, navigateTo } from '../../authService.js';
 
 // ============================================================================
 // TASK DATA FETCHING
@@ -44,6 +44,10 @@ export async function getActiveTimer(taskKey) {
 // ============================================================================
 
 export async function startTimer() {
+    if (!sessionStorage.getItem('selectedMachineId')){
+        navigateTo(ROUTES.MACHINING);
+        return;
+    }
     const response = await authedFetch(`${backendBase}/machining/timers/start/`, {
         method: 'POST',
         body: JSON.stringify({
@@ -62,6 +66,10 @@ export async function startTimer() {
 }
 
 export async function createManualTimeEntry(startDateTime, endDateTime) {
+    if (!sessionStorage.getItem('selectedMachineId')){
+        navigateTo(ROUTES.MACHINING);
+        return;
+    }
     const response = await authedFetch(`${backendBase}/machining/manual-time/`, {
         method: 'POST',
         body: JSON.stringify({
@@ -108,47 +116,7 @@ export async function markTaskAsDone() {
     return response.ok;
 }
 
-export async function logTimeToJira(started, elapsedSeconds, comment) {
-    const url = `${state.base}/rest/api/3/issue/${state.currentIssueKey}/worklog`;
-    const response = await authedFetch(proxyBase + encodeURIComponent(url), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            started,
-            timeSpentSeconds: elapsedSeconds,
-            comment: {
-                type: 'doc',
-                version: 1,
-                content: [{
-                    type: 'paragraph',
-                    content: [{
-                        type: 'text',
-                        text: comment
-                    }]
-                }]
-            }
-        })
-    });
-    
-    return response.ok;
-}
 
-// ============================================================================
-// FAULT REPORTING
-// ============================================================================
-
-export async function reportMachineFault(machineId, description, isBreaking) {
-    const response = await authedFetch(`${backendBase}/machines/faults/`, {
-        method: 'POST',
-        body: JSON.stringify({
-            machine: machineId,
-            description: description,
-            is_breaking: isBreaking
-        })
-    });
-    
-    return response.ok;
-}
 
 // ============================================================================
 // MAINTENANCE CHECKING

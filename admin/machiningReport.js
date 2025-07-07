@@ -115,7 +115,7 @@ async function handleSaveToJira(timerId) {
     let elapsedSeconds = Math.round((finishTime - timer.start_time) / 1000);
     elapsedSeconds = Math.max(elapsedSeconds, 60);
 
-    const logged = await logTimeToJiraShared({ issueKey: timer.issue_key, baseUrl: 'https://gemkom-1.atlassian.net', startTime: timer.start_time, elapsedSeconds });
+    const logged = await logTimeToJiraShared({ issueKey: timer.issue_key, startTime: timer.start_time, elapsedSeconds: elapsedSeconds });
     if (logged) {
         alert(`Timer ${timerId} Jira'ya kaydedildi ve durduruldu!`);
     } else {
