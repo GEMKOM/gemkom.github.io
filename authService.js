@@ -236,7 +236,8 @@ export async function fetchUsers() {
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
-        return await response.json();
+        const data = await response.json();
+        return data.results;
     } catch (error) {
         console.error('Failed to fetch users:', error);
         return [];

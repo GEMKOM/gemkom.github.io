@@ -28,13 +28,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const errorMessage = document.getElementById('error-message');
 
     // Fetch and populate users
-    try {
-        const users = await fetchUsers();
-        populateUserSelect(users);
-    } catch (error) {
-        errorMessage.textContent = 'Kullanıcılar yüklenemedi.';
-        errorMessage.style.display = 'block';
-    }
+    // try {
+    const users = await fetchUsers();
+    populateUserSelect(users);
+    // } catch (error) {
+    //     errorMessage.textContent = 'Kullanıcılar yüklenemedi.';
+    //     errorMessage.style.display = 'block';
+    // }
 
     // Handle user selection
     userSelect.addEventListener('change', () => {

@@ -147,7 +147,8 @@ export async function createMachineTaskView({
                 const backendBase = (await import('../base.js')).backendBase;
                 const { authedFetch } = await import('../authService.js');
                 const resp = await authedFetch(`${backendBase}/machining/hold-tasks/`);
-                const codes = await resp.json();
+                const data = await resp.json();
+                const codes = data.results;
                 select.innerHTML = codes.map(code => `<option value="${code.key}">${code.name || code.job_no}</option>`).join('');
             } catch (err) {
                 select.innerHTML = '<option>Bekletme nedenleri alınamadı</option>';

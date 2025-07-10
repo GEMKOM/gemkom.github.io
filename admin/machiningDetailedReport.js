@@ -7,7 +7,8 @@ async function fetchUsersForMachining() {
     // Adjust endpoint if needed
     const resp = await authedFetch(`${backendBase}/users?team=machining`);
     if (!resp.ok) return [];
-    return await resp.json();
+    const data = await resp.json();
+    return data.results;
 }
 
 export function showMachiningDetailedReport() {
