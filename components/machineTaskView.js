@@ -9,7 +9,7 @@ export async function createMachineTaskView({
     title = '',
     machineLabel = 'Makine Seçimi',
     searchPlaceholder = 'TI numarası ile ara...',
-    taskDetailBasePath = '' // e.g. '/machining/tasks/' or '/cutting/tasks/'
+    taskDetailBasePath = ''
 }) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -61,18 +61,41 @@ export async function createMachineTaskView({
         select.appendChild(option);
     });
     let allTasks = [];
+    
     async function loadTasks(machineId) {
         allTasks = await fetchTasks(machineId);
         renderTaskList(allTasks);
     }
+    
     select.onchange = () => {
         const selectedOption = select.options[select.selectedIndex];
-        sessionStorage.setItem('selectedMachineId', selectedOption.dataset.machineId || '');
-        loadTasks(select.value);
+        const selectedMachine = machines.find(m => String(m.id) === String(selectedOption.dataset.machineId));
+        if (selectedMachine) {
+            // Update URL without page reload
+            const newUrl = `/machining/?machine_id=${encodeURIComponent(selectedMachine.id)}`;
+            window.history.pushState({ machineId: selectedMachine.id }, '', newUrl);
+            
+            // Load tasks for the selected machine
+            loadTasks(selectedMachine.jira_id);
+        }
     };
-    // Initial load
-    sessionStorage.setItem('selectedMachineId', '');
-
+    
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', (event) => {
+        const params = new URLSearchParams(window.location.search);
+        const machineId = params.get('machine_id');
+        if (machineId) {
+            const machine = machines.find(m => String(m.id) === String(machineId));
+            if (machine) {
+                select.value = machine.jira_id;
+                loadTasks(machine.jira_id);
+            }
+        } else {
+            select.value = '';
+            allTasks = [];
+            renderTaskList(allTasks);
+        }
+    });
     // Search
     container.querySelector('#search-input').oninput = (e) => {
         const term = e.target.value.trim().toLowerCase();
@@ -85,13 +108,76 @@ export async function createMachineTaskView({
     function renderTaskList(tasks) {
         const ul = container.querySelector('#task-list');
         ul.innerHTML = '';
+        // Add placeholder task at the top
+        const placeholderCard = document.createElement('div');
+        placeholderCard.className = 'task-card placeholder-task';
+        placeholderCard.style.background = '#ffeeba'; // Distinct color
+        placeholderCard.style.cursor = 'pointer';
+        placeholderCard.innerHTML = '<h3>Diğer İşler</h3><p>Makineyi bekletme (fabrika işleri, malzeme bekleme, yemek molası, izin, vs) için tıklayın</p>';
+        placeholderCard.onclick = async () => {
+            // Show modal to select reason_code
+            let modal = document.getElementById('hold-task-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'hold-task-modal';
+                modal.innerHTML = `
+                <div class="modal fade" tabindex="-1" id="hold-task-modal-inner">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Bekletme Nedeni Seç</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                      </div>
+                      <div class="modal-body">
+                        <select id="reason-code-select" class="form-select"><option>Yükleniyor...</option></select>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="button" class="btn btn-primary" id="select-reason-code-btn">Devam</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>`;
+                document.body.appendChild(modal);
+            }
+            // Fetch reason codes
+            const select = document.getElementById('reason-code-select');
+            select.innerHTML = '<option>Yükleniyor...</option>';
+            try {
+                const backendBase = (await import('../base.js')).backendBase;
+                const { authedFetch } = await import('../authService.js');
+                const resp = await authedFetch(`${backendBase}/machining/hold-tasks/`);
+                const codes = await resp.json();
+                select.innerHTML = codes.map(code => `<option value="${code.key}">${code.name || code.job_no}</option>`).join('');
+            } catch (err) {
+                select.innerHTML = '<option>Bekletme nedenleri alınamadı</option>';
+            }
+            // Show modal
+            const bsModal = new bootstrap.Modal(document.getElementById('hold-task-modal-inner'));
+            bsModal.show();
+            document.getElementById('select-reason-code-btn').onclick = () => {
+                const reasonCode = select.value;
+                const reasonName = select.options[select.selectedIndex]?.text || reasonCode;
+                if (!reasonCode) return;
+                const params = new URLSearchParams(window.location.search);
+                const machineId = params.get('machine_id');
+                // Go to tasks page with reason_code as issue_key and pass name
+                window.location.href = `${taskDetailBasePath}?machine_id=${encodeURIComponent(machineId)}&key=${encodeURIComponent(reasonCode)}&name=${encodeURIComponent(reasonName)}&hold=1`;
+            };
+        };
+        ul.appendChild(placeholderCard);
+        // Render normal tasks
         tasks.forEach(task => {
             const card = document.createElement('div');
             card.className = 'task-card';
             card.onclick = () => {
                 if (onTaskClick) onTaskClick(task);
                 if (taskDetailBasePath && task.key) {
-                    window.location.href = `${taskDetailBasePath}?key=${task.key}`;
+                    // Get machine_id from URL
+                    const params = new URLSearchParams(window.location.search);
+                    const machineId = params.get('machine_id');
+                    const url = `${taskDetailBasePath}?machine_id=${encodeURIComponent(machineId)}&key=${task.key}`;
+                    window.location.href = url;
                 }
             };
             const fields = task.fields || {};

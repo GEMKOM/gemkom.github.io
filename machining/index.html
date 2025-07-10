@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="machining.css">
     <link rel="stylesheet" href="../components/machineTaskView.css">
     <link rel="stylesheet" href="../components/navbar.css">
+    <link rel="stylesheet" href="../components/sidebar.css">
     <link rel="stylesheet" href="../components/timerWidget.css">
     <link rel="icon" type="image/png" href="../images/gemkom.png">
     <link rel="stylesheet" href="../pre-auth.css">
@@ -18,8 +19,18 @@
     <div id="navbar-container"></div>
 
     <!-- Main Content -->
-    <div class="container mt-4">
-        <div id="main-view"></div>
+    <div class="main-layout">
+        <!-- Sidebar -->
+        <div id="sidebar-root"></div>
+        
+        <!-- Content Area -->
+        <div class="content-area">
+            <div class="container">
+                <div class="main-container">
+                    <div id="main-view"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap JS and Popper.js -->

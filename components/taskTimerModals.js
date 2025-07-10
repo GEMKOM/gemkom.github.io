@@ -1,8 +1,8 @@
 // components/taskTimerModals.js
 // Generic modals for task timer/detail views (manual time, fault report)
 
-import { formatTime, formatJiraDate } from '../machining/machiningService.js';
-import { createMaintenanceRequest } from '../maintenance/maintenance.js';
+import { formatTime, formatJiraDate } from '../generic/formatters.js';
+import { createMaintenanceRequest } from '../maintenance/maintenanceApi.js';
 
 export function createManualTimeModal() {
     const modal = document.createElement('div');
@@ -74,7 +74,7 @@ function setupManualTimeModalEvents(modal) {
     updateDuration();
 }
 
-export function showManualTimeModal({ createManualTimeEntry, logTimeToJiraShared }) {
+export function showManualTimeModal({ createManualTimeEntry, logTimeToJiraShared, isHoldTask = false, comment = null }) {
     const modal = createManualTimeModal();
     document.body.appendChild(modal);
     return new Promise((resolve) => {
@@ -112,24 +112,30 @@ export function showManualTimeModal({ createManualTimeEntry, logTimeToJiraShared
                 }
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Kaydediliyor...';
-                const timerCreated = await createManualTimeEntry(startDateTime, endDateTime);
+                const timerCreated = await createManualTimeEntry(startDateTime, endDateTime, comment);
                 if (!timerCreated) {
                     throw new Error('Failed to create timer in database');
                 }
-                const started = formatJiraDate(startDateTime.getTime());
-                const startDateStr = `${startDate} ${startTime}`;
-                const endDateStr = `${endDate} ${endTime}`;
-                const comment = `Manuel giriş: ${formatTime(elapsedSeconds)} (${startDateStr} - ${endDateStr})`;
-                const jiraLogged = await logTimeToJiraShared({
-                    startTime:started, 
-                    elapsedSeconds: elapsedSeconds, 
-                    comment: comment
-                });
-                if (jiraLogged) {
-                    alert(`Manuel zaman girişi başarılı: ${formatTime(elapsedSeconds)}`);
-                    window.dispatchEvent(new CustomEvent('softReload'));
+                
+                // Only save to Jira if not a hold task
+                if (!isHoldTask) {
+                    const started = formatJiraDate(startDateTime.getTime());
+                    const startDateStr = `${startDate} ${startTime}`;
+                    const endDateStr = `${endDate} ${endTime}`;
+                    const comment = `Manuel giriş: ${formatTime(elapsedSeconds)} (${startDateStr} - ${endDateStr})`;
+                    const jiraLogged = await logTimeToJiraShared({
+                        startTime:started, 
+                        elapsedSeconds: elapsedSeconds, 
+                        comment: comment
+                    });
+                    if (jiraLogged) {
+                        alert(`Manuel zaman girişi başarılı: ${formatTime(elapsedSeconds)}`);
+                    } else {
+                        alert("Jira'ya kayıt yapılırken hata oluştu.");
+                    }
                 } else {
-                    alert("Jira'ya kayıt yapılırken hata oluştu.");
+                    // For hold tasks, just show success message without Jira logging
+                    alert(`Manuel zaman girişi başarılı (Bekletme görevi): ${formatTime(elapsedSeconds)}`);
                 }
                 closeModal();
             } catch (error) {
@@ -149,7 +155,67 @@ export function showManualTimeModal({ createManualTimeEntry, logTimeToJiraShared
     });
 }
 
-export function createFaultReportModal() {
+export function createCommentModal(title = "Yorum Giriniz") {
+    const modal = document.createElement('div');
+    modal.className = 'comment-modal';
+    modal.innerHTML = `
+        <div class="comment-modal-content">
+            <div class="comment-modal-header">
+                <h3>${title}</h3>
+                <button class="comment-modal-close" id="comment-modal-close">&times;</button>
+            </div>
+            <div class="comment-modal-body">
+                <div class="form-group">
+                    <label for="comment-text">Açıklama:</label>
+                    <textarea id="comment-text" rows="4" placeholder="Bu iş size kim tarafından verildi? Beklediğiniz malzeme nedir? Sorunu detaylı bir şekilde açıklayınız." required></textarea>
+                </div>
+            </div>
+            <div class="comment-modal-footer">
+                <button class="btn btn-secondary" id="comment-modal-cancel">İptal</button>
+                <button class="btn btn-primary" id="comment-modal-submit">Onayla</button>
+            </div>
+        </div>
+    `;
+    return modal;
+}
+
+export function showCommentModal(title = "Yorum Giriniz") {
+    const modal = createCommentModal(title);
+    document.body.appendChild(modal);
+    return new Promise((resolve) => {
+        const submitBtn = modal.querySelector('#comment-modal-submit');
+        const cancelBtn = modal.querySelector('#comment-modal-cancel');
+        const closeBtn = modal.querySelector('#comment-modal-close');
+        const commentTextarea = modal.querySelector('#comment-text');
+        
+        function closeModal() {
+            document.body.removeChild(modal);
+            resolve(null);
+        }
+        
+        submitBtn.onclick = () => {
+            const comment = commentTextarea.value.trim();
+            if (!comment) {
+                alert("Lütfen bir açıklama giriniz.");
+                return;
+            }
+            document.body.removeChild(modal);
+            resolve(comment);
+        };
+        
+        cancelBtn.onclick = closeModal;
+        closeBtn.onclick = closeModal;
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        };
+        
+        commentTextarea.focus();
+    });
+}
+
+export function createFaultReportModal(machineId) {
     let modal = document.getElementById('fault-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -213,7 +279,6 @@ export function createFaultReportModal() {
             try {
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Gönderiliyor...';
-                const machineId = sessionStorage.getItem('selectedMachineId') || -1;
                 if (!machineId || machineId === -1) {
                     alert("Lütfen önce bir makine seçin.");
                     return;

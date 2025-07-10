@@ -1,10 +1,12 @@
 import { backendBase } from '../base.js';
-import { getSyncedNow } from '../timeService.js'
+import { getSyncedNow } from '../generic/timeService.js'
 import { authedFetch } from '../authService.js';
+import { extractResultsFromResponse } from '../generic/paginationHelper.js';
 
 export async function fetchActiveTimers() {
   const res = await authedFetch(`${backendBase}/machining/timers?is_active=true`);
-  return await res.json();
+  const responseData = await res.json();
+  return extractResultsFromResponse(responseData);
 }
 
 export function formatDuration(startTime) {

@@ -1,7 +1,6 @@
 import { logout, isAdmin, isLoggedIn, getUser, navigateTo, ROUTES } from '../authService.js';
 import { backendBase } from '../base.js';
 import { authedFetch } from '../authService.js';
-import { isLead } from '../authService.js';
 
 // Navbar component
 export function createNavbar() {
@@ -25,7 +24,7 @@ export function createNavbar() {
                     <li class="nav-item">
                         <a class="nav-link" href="/maintenance">Bakım</a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item machining-only" style="display: none;">
                         <a class="nav-link" href="/machining">Talaşlı İmalat</a>
                     </li>
                 </ul>
@@ -65,10 +64,27 @@ export function createNavbar() {
 
     // Show admin tab if user is admin (sync)
     const adminTab = navbar.querySelector('.admin-only');
-    if (isAdmin() || isLead()) {
+    if (isAdmin()) {
         adminTab.style.display = 'block';
     } else {
         adminTab.style.display = 'none';
+    }
+    
+    // Show machining tab if user is machining team or admin
+    const machiningTab = navbar.querySelector('.machining-only');
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (isAdmin() || (user && user.team === 'machining')) {
+        machiningTab.style.display = 'block';
+    } else {
+        machiningTab.style.display = 'none';
+    }
+    
+    // Show cutting tab if user is cutting team or admin
+    const cuttingTab = navbar.querySelector('.cutting-only');
+    if (isAdmin() || (user && user.team === 'cutting')) {
+        cuttingTab.style.display = 'block';
+    } else {
+        cuttingTab.style.display = 'none';
     }
 
     return navbar;
@@ -179,7 +195,7 @@ export function initNavbar() {
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
+                        <li class="nav-item machining-only" style="display: none;">
                             <a class="nav-link" href="/machining">Talaşlı İmalat</a>
                         </li>
                         <li class="nav-item">
@@ -223,11 +239,27 @@ export function initNavbar() {
       });
       // Show admin tab if user is admin (sync)
       const adminTab = navbarContainer.querySelector('.admin-only');
-      if (isAdmin() || isLead()) {
+      if (isAdmin()) {
           adminTab.style.display = 'block';
       } else {
           adminTab.style.display = 'none';
       }
+      
+      // Show machining tab if user is machining team or admin
+      const machiningTab = navbarContainer.querySelector('.machining-only');
+      if (isAdmin() || user.team === 'machining') {
+          machiningTab.style.display = 'block';
+      } else {
+          machiningTab.style.display = 'none';
+      }
+      
+      // Show cutting tab if user is cutting team or admin
+    //   const cuttingTab = navbarContainer.querySelector('.cutting-only');
+    //   if (isAdmin() || user.team === 'cutting') {
+    //       cuttingTab.style.display = 'block';
+    //   } else {
+    //       cuttingTab.style.display = 'none';
+    //   }
     }
     renderNavbar();
 }

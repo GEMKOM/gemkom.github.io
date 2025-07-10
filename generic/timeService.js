@@ -1,5 +1,5 @@
-import { backendBase } from './base.js';
-import { authedFetch } from './authService.js';
+import { backendBase } from '../base.js';
+import { authedFetch } from '../authService.js';
 let serverTimeOffset = 0;
 
 /**

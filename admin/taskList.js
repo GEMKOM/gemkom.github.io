@@ -9,7 +9,7 @@ const columns = [
     { key: 'position_no', label: 'Pozisyon No' },
     { key: 'quantity', label: 'Adet' },
     { key: 'completion_date', label: 'Bitiş Tarihi' },
-    { key: 'completed_by', label: 'Tamamlayan' },
+    { key: 'completed_by_username', label: 'Tamamlayan' },
     { key: 'status', label: 'Durum' },
     { key: 'actions', label: '' },
 ];
@@ -162,8 +162,12 @@ async function renderTaskListTable() {
                 } else if (col.key === 'completion_date') {
                     val = row.completion_date ? new Date(row.completion_date).toLocaleString('tr-TR') : '';
                 } else if (col.key === 'actions') {
-                    val = !row.completion_date ? `<button class="btn btn-sm btn-success mark-done-btn" data-key="${row.key}">Tamamlandı Olarak İşaretle</button>` : '';
-                } else if (col.key === 'completed_by'){
+                    if (!row.completion_date) {
+                        val = `<button class="btn btn-sm btn-success mark-done-btn" data-key="${row.key}">Tamamlandı Olarak İşaretle</button>`;
+                    } else {
+                        val = `<button class="btn btn-sm btn-warning unmark-done-btn" data-key="${row.key}">Tamamlanmadı Olarak İşaretle</button>`;
+                    }
+                } else if (col.key === 'completed_by_username'){
                     val = row['completed_by_username'] ? row['completed_by_username'] : '';
                 }
                 else {
@@ -197,6 +201,32 @@ async function renderTaskListTable() {
                 } catch (err) {
                     btn.disabled = false;
                     btn.textContent = 'Tamamlandı Olarak İşaretle';
+                    alert('Hata: ' + err.message);
+                }
+            });
+        });
+
+        // Add event listeners for unmark as done buttons
+        container.querySelectorAll('.unmark-done-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const key = btn.getAttribute('data-key');
+                btn.disabled = true;
+                btn.textContent = 'Gönderiliyor...';
+                try {
+                    const resp = await authedFetch(`${backendBase}/machining/tasks/unmark-completed/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ key })
+                    });
+                    if (!resp.ok) throw new Error('İşaretleme başarısız');
+                    btn.textContent = 'Tamamlanmadı';
+                    btn.classList.remove('btn-warning');
+                    btn.classList.add('btn-secondary');
+                    // Optionally refresh the table
+                    await renderTaskListTable();
+                } catch (err) {
+                    btn.disabled = false;
+                    btn.textContent = 'Tamamlanmadı Olarak İşaretle';
                     alert('Hata: ' + err.message);
                 }
             });

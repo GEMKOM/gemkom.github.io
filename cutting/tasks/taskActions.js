@@ -1,17 +1,15 @@
 // --- taskActions.js ---
 // Button action handlers for task functionality
 
-import { state, logTimeToJiraShared } from '../machiningService.js';
+import { state, logTimeToJiraShared, markTaskAsDone, checkMachineMaintenance, createManualTimeEntry } from '../cuttingService.js';
 import { navigateTo, ROUTES } from '../../authService.js';
-import { markTaskAsDone } from './taskApi.js';
 import { showManualTimeModal, createFaultReportModal, showCommentModal } from '../../components/taskTimerModals.js';
-import { checkMachineMaintenance, createManualTimeEntry } from './taskApi.js';
 import { handleStartTimer, handleStopTimer } from './taskLogic.js';
 
 async function checkMaintenanceAndAlert() {
     if (await checkMachineMaintenance(state.currentMachine.id)) {
         alert('Bu makine bakımda. İşlem yapamazsınız.');
-        navigateTo(ROUTES.MACHINING);
+        navigateTo(ROUTES.CUTTING);
         return true;
     }
     return false;
@@ -20,10 +18,10 @@ async function checkMaintenanceAndAlert() {
 export async function handleStartStopClick() {
     if (state.currentMachine.is_under_maintenance) {
         alert('Bu makine bakımda. İşlem yapamazsınız.');
-        navigateTo(ROUTES.MACHINING);
+        navigateTo(ROUTES.CUTTING);
         return;
     }
-    if (!state.currentMachine.has_active_timer) {
+    if (!state.currentTimer || !state.currentTimer.start_time) {
         // For hold tasks, show comment modal first
         if (state.currentIssue.is_hold_task && state.currentIssue.key !== 'W-14' && state.currentIssue.key !== 'W-02') {
             const comment = await showCommentModal("Bekletme Görevi Başlatma");
@@ -53,7 +51,7 @@ export async function handleMarkDoneClick() {
         const marked = await markTaskAsDone();
         if (marked) {
             alert('Görev tamamlandı olarak işaretlendi.');
-            navigateTo(ROUTES.MACHINING);
+            navigateTo(ROUTES.CUTTING);
         } else {
             alert("Hata oluştu. Lütfen tekrar deneyin.");
         }
@@ -62,7 +60,6 @@ export async function handleMarkDoneClick() {
         alert("Hata oluştu. Lütfen tekrar deneyin.");
     }
 }
-
 
 export async function handleManualLogClick() {
     if (await checkMaintenanceAndAlert()) return;
@@ -87,22 +84,20 @@ export async function handleManualLogClick() {
     }
 }
 
-
 export async function handleFaultReportClick() {
     if (!state.currentMachine.id) {
-        navigateTo(ROUTES.MACHINING);
+        navigateTo(ROUTES.CUTTING);
         return;
     }
     await createFaultReportModal(state.currentMachine.id);
 }
 
 export function handleBackClick() {
-    if (state.timerActive) {
+    if (state.currentTimer && state.currentTimer.start_time) {
         if (!confirm("Zamanlayıcı aktif. Geri dönmek istediğinize emin misiniz?")) {
             return;
         }
         clearInterval(state.intervalId);
-        setInactiveTimerUI();
     }
-    navigateTo(ROUTES.MACHINING);
+    navigateTo(ROUTES.CUTTING);
 } 

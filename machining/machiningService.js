@@ -1,93 +1,45 @@
 // --- machiningService.js ---
 import {
   proxyBase,
-  backendBase
+  backendBase,
+  jiraBase
 } from '../base.js';
 import { authedFetch } from '../authService.js';
+import { formatTime, formatJiraDate } from '../generic/formatters.js';
 
 export const state = {
-  base: 'https://gemkom-1.atlassian.net',
-  timerActive: false,
-  intervalId: null,
-  currentIssueKey: null,
-  startTime: null,
-  finish_time: null,
-  userId: localStorage.getItem('userId'),
-  selectedMachine: null,
-  allIssues: [],
-  selectedIssue: null,
-  currentTimerId: null
+    intervalId: null,
+    currentIssue: {
+        key: null,
+        name: null,
+        job_no: null,
+        image_no: null,
+        position_no: null,
+        quantity: null,
+        machine_id: null,
+        machine_name: null
+    },
+    currentTimer: {
+        id: null,
+        start_time: null
+    },
+    currentMachine: null
 };
 
-export function formatTime(secs) {
-  const hrs = Math.floor(secs / 3600).toString().padStart(2, '0');
-  const mins = Math.floor((secs % 3600) / 60).toString().padStart(2, '0');
-  const sec = (secs % 60).toString().padStart(2, '0');
-  return `${hrs}:${mins}:${sec}`;
-}
 
-export function formatJiraDate(ms) {
-  const d = new Date(ms);
-  const pad = n => (n < 10 ? '0' + n : n);
-  const yyyy = d.getFullYear();
-  const MM = pad(d.getMonth() + 1);
-  const dd = pad(d.getDate());
-  const hh = pad(d.getHours());
-  const mm = pad(d.getMinutes());
-  const ss = pad(d.getSeconds());
-  const msms = (d.getMilliseconds() + '').padStart(3, '0');
-  const offset = -d.getTimezoneOffset();
-  const sign = offset >= 0 ? '+' : '-';
-  const offsetHours = pad(Math.floor(Math.abs(offset) / 60));
-  const offsetMinutes = pad(Math.abs(offset) % 60);
-  return `${yyyy}-${MM}-${dd}T${hh}:${mm}:${ss}.${msms}${sign}${offsetHours}${offsetMinutes}`;
-}
-
-export async function fetchIssuesByFilter(filterId) {
+export async function fetchTasksForMachining(filterId) {
     const jql = `filter=${filterId} AND status="To Do"`;
     const encodedJql = encodeURIComponent(jql);
     
-    const url = `${state.base}/rest/api/3/search?jql=${encodedJql}&fields=summary,customfield_10117,customfield_10184,customfield_10185,customfield_10187,customfield_11411`;
+    const url = `${jiraBase}/rest/api/3/search?jql=${encodedJql}&fields=summary,customfield_10117,customfield_10184,customfield_10185,customfield_10187,customfield_11411`;
     const res = await authedFetch(proxyBase + encodeURIComponent(url), {
         headers: { 'Content-Type': 'application/json' }
     });
     const data = await res.json();
-    state.allIssues = data.issues;
     return data.issues;
 }
 
-export function saveTimerState() {
-  if (state.timerActive && state.startTime && state.currentIssueKey) {
-    localStorage.setItem('jira-timer-state', JSON.stringify({
-      startTime: state.startTime,
-      issueKey: state.currentIssueKey
-    }));
-  } else {
-    localStorage.removeItem('jira-timer-state');
-  }
-}
 
-export function restoreTimerState(callback) {
-  const saved = localStorage.getItem('jira-timer-state');
-  if (saved) {
-    const { startTime, issueKey } = JSON.parse(saved);
-    state.startTime = startTime;
-    state.currentIssueKey = issueKey;
-    authedFetch(proxyBase + encodeURIComponent(`${state.base}/rest/api/3/issue/${issueKey}`))
-      .then(res => res.json())
-      .then(issue => callback(issue, true));
-  }
-}
-
-/**
- * Stops a timer in the backend.
- * @param {Object} params
- * @param {string|number} params.timerId
- * @param {string|number} params.userId
- * @param {number} params.finishTime (ms)
- * @param {boolean} params.syncToJira
- * @returns {Promise<boolean>}
- */
 export async function stopTimerShared({ timerId, finishTime, syncToJira }) {
     const response = await authedFetch(`${backendBase}/machining/timers/stop/`, {
         method: 'POST',
@@ -101,22 +53,13 @@ export async function stopTimerShared({ timerId, finishTime, syncToJira }) {
     return response.ok;
 }
 
-/**
- * Logs time to Jira for a given issue.
- * @param {Object} params
- * @param {string} params.issueKey
- * @param {string} params.baseUrl
- * @param {number} params.startTime (ms)
- * @param {number} params.elapsedSeconds
- * @param {string} [params.comment]
- * @returns {Promise<boolean>}
- */
+
 export async function logTimeToJiraShared({ startTime, elapsedSeconds, comment, issueKey=null }) {
     if (!issueKey){
-      issueKey = state.currentIssueKey;
+      issueKey = state.currentIssue.key;
     }
     const started = formatJiraDate(startTime);
-    const url = `${state.base}/rest/api/3/issue/${issueKey}/worklog`;
+    const url = `${jiraBase}/rest/api/3/issue/${issueKey}/worklog`;
     const response = await authedFetch(proxyBase + encodeURIComponent(url), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -137,9 +80,4 @@ export async function logTimeToJiraShared({ startTime, elapsedSeconds, comment, 
         })
     });
     return response.ok;
-}
-
-export const fetchMachinesForMachining = async () => {
-  const res = await authedFetch(`${backendBase}/machines?used_in=machining`);
-  return await res.json();
 }

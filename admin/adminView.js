@@ -1,6 +1,6 @@
 // --- adminView.js ---
 import { fetchActiveTimers, formatDuration } from './adminService.js';
-import { getSyncedNow, syncServerTime } from '../timeService.js';
+import { getSyncedNow, syncServerTime } from '../generic/timeService.js';
 import { backendBase } from '../base.js';
 import { authedFetch } from '../authService.js';
 

@@ -1,16 +1,11 @@
 // admin/machiningDetailedReport.js
 import { backendBase } from "../base.js";
 import { authedFetch } from "../authService.js";
+import { fetchMachines } from "../generic/machines.js";
 
 async function fetchUsersForMachining() {
     // Adjust endpoint if needed
     const resp = await authedFetch(`${backendBase}/users?team=machining`);
-    if (!resp.ok) return [];
-    return await resp.json();
-}
-
-async function fetchMachinesForMachining() {
-    const resp = await authedFetch(`${backendBase}/machines?used_in=machining`);
     if (!resp.ok) return [];
     return await resp.json();
 }
@@ -21,7 +16,7 @@ export function showMachiningDetailedReport() {
     mainContent.innerHTML = `
         <div class="row mb-3">
             <div class="col-12">
-                <h3>Detaylı Talaşlı İmalat Raporu</h3>
+                <h3>Gruplu Talaşlı İmalat Raporu</h3>
                 <form id="detailed-report-filters" class="row g-3 align-items-end">
                     <div class="col-md-2">
                         <label for="group_by" class="form-label">Gruplama</label>
@@ -125,7 +120,7 @@ export function showMachiningDetailedReport() {
                 });
             } else if (groupBy === 'machine') {
                 groupLabel = 'Makine';
-                const machines = await fetchMachinesForMachining();
+                const machines = await fetchMachines('machining');
                 mergedData = machines.map(machine => {
                     const found = data.find(row => row.group === machine.name);
                     return {

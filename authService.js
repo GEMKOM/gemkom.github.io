@@ -13,7 +13,8 @@ export const ROUTES = {
     ADMIN: '/admin/',
     MACHINING: '/machining/',
     MACHINING_TASKS: '/machining/tasks/',
-    MAINTENANCE: '/maintenance/'
+    MAINTENANCE: '/maintenance/',
+    CUTTING: '/cutting/'
 };
 
 // Track if we're currently redirecting to prevent loops
@@ -94,25 +95,12 @@ export function isLead() {
     }
 }
 
-// Soft reload function - updates state without full page reload
-export function softReload() {
-    console.log('Soft reload triggered');
-    // Dispatch a custom event that pages can listen to
-    window.dispatchEvent(new CustomEvent('softReload'));
-}
-
 // Enhanced navigation with optional soft reload
 export function navigateTo(path, options = {}) {
     if (isRedirecting) return; // Prevent multiple simultaneous redirects
     
     isRedirecting = true;
-    
-    if (options.softReload && path === window.location.pathname) {
-        // If navigating to the same page, do a soft reload instead
-        softReload();
-    } else {
-        window.location.href = path;
-    }
+    window.location.href = path;
     
     // Reset redirecting flag after a short delay
     setTimeout(() => {
@@ -130,6 +118,8 @@ export function navigateByTeam() {
         navigateTo(ROUTES.MACHINING);
     } else if (user.team === 'maintenance') {
         navigateTo(ROUTES.MAINTENANCE);
+    } else if (user.team === 'cutting') {
+        navigateTo(ROUTES.CUTTING);
     }
 }
 

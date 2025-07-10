@@ -1,14 +1,15 @@
 import { updateActiveTimers, updateMachines } from './adminView.js';
-import { fetchMachinesForMachining } from '../machining/machiningService.js';
-import { getSyncedNow } from '../timeService.js';
+import { fetchMachines } from '../generic/machines.js';
+import { getSyncedNow } from '../generic/timeService.js';
 import { stopTimerShared, logTimeToJiraShared } from '../machining/machiningService.js';
 import { TimerWidget } from '../components/timerWidget.js';
 import { authedFetch } from '../authService.js';
+import { extractResultsFromResponse } from '../generic/paginationHelper.js';
 
 export async function showMachiningLiveReport() {
     const mainContent = document.querySelector('.admin-main-content .container-fluid');
     if (!mainContent) return;
-    const machines = await fetchMachinesForMachining();
+    const machines = await fetchMachines('machining');
     mainContent.innerHTML = `
         <div class="d-flex justify-content-end mb-3">
             <button id="refresh-btn" class="btn btn-primary"> ⟳ Yenile</button>
@@ -91,10 +92,13 @@ function setupMachiningTableEventListeners() {
 
 async function fetchActiveTimerById(timerId) {
     // Fetch all active timers and find the one with the given ID
-    const res = await authedFetch(`/machining/timers?is_active=true`);
+    const res = await authedFetch(`/machining/timers/${timerId}/`);
     if (!res.ok) return null;
-    const timers = await res.json();
-    return timers.find(t => t.id == timerId);
+    const timer = await res.json();
+    if (timer.finish_time === null) {
+        return timer;
+    }
+    return null;
 }
 
 async function handleSaveToJira(timerId) {

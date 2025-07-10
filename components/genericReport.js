@@ -1,0 +1,497 @@
+import { authedFetch } from "../authService.js";
+
+export class GenericReport {
+    constructor(config) {
+        this.config = {
+            title: 'Rapor',
+            containerId: 'generic-report-container',
+            apiEndpoint: '',
+            defaultColumns: [],
+            allColumns: [],
+            filters: [],
+            showEditButton: false,
+            showDeleteButton: false,
+            editModalId: null,
+            onEdit: null,
+            onDelete: null,
+            onDataTransform: null,
+            onRowRender: null,
+            pageSize: 100, // Default page size
+            ...config
+        };
+        
+        this.selectedColumns = this.loadColumnSelection();
+        this.paginationData = null;
+        this.init();
+    }
+
+    loadColumnSelection() {
+        const storageKey = `${this.config.containerId}Columns`;
+        try {
+            return JSON.parse(localStorage.getItem(storageKey)) || this.config.defaultColumns;
+        } catch {
+            return this.config.defaultColumns;
+        }
+    }
+
+    saveColumnSelection(columns) {
+        const storageKey = `${this.config.containerId}Columns`;
+        localStorage.setItem(storageKey, JSON.stringify(columns));
+    }
+
+    init() {
+        this.render();
+        this.bindEvents();
+        this.fetchData();
+    }
+
+    render() {
+        const container = document.getElementById(this.config.containerId);
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="row mb-3">
+                <div class="col-12">
+                    <h3>${this.config.title}</h3>
+                    ${this.renderFilters()}
+                    ${this.renderColumnSelector()}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div id="${this.config.containerId}-table-container"></div>
+                    <div id="${this.config.containerId}-pagination-container"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderFilters() {
+        if (!this.config.filters || this.config.filters.length === 0) {
+            return '';
+        }
+
+        const filterHtml = this.config.filters.map(filter => {
+            const inputType = filter.type || 'text';
+            const placeholder = filter.placeholder || '';
+            const label = filter.label || filter.key;
+            
+            if (inputType === 'datetime') {
+                const defaultValue = filter.defaultValue || '';
+                const defaultTime = filter.defaultTime || '00:00';
+                return `
+                    <div class="col-md-3">
+                        <label for="${filter.key}" class="form-label">${label}</label>
+                        <div class="input-group">
+                            <input type="date" class="form-control" id="${filter.key}_date" value="${defaultValue}">
+                            <input type="time" class="form-control" id="${filter.key}_time" value="${defaultTime}">
+                        </div>
+                    </div>
+                `;
+            } else if (inputType === 'select') {
+                const options = filter.options ? filter.options.map(opt => 
+                    `<option value="${opt.value}">${opt.label}</option>`
+                ).join('') : '';
+                return `
+                    <div class="col-md-2">
+                        <label for="${filter.key}" class="form-label">${label}</label>
+                        <select class="form-select" id="${filter.key}">
+                            <option value="">Tümü</option>
+                            ${options}
+                        </select>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="col-md-2">
+                        <label for="${filter.key}" class="form-label">${label}</label>
+                        <input type="${inputType}" class="form-control" id="${filter.key}" placeholder="${placeholder}">
+                    </div>
+                `;
+            }
+        }).join('');
+
+        return `
+            <form id="${this.config.containerId}-filters" class="row g-3 align-items-end">
+                ${filterHtml}
+                <div class="col-md-2 mt-2">
+                    <button type="button" id="${this.config.containerId}-fetch-btn" class="btn btn-primary w-100">Listele</button>
+                </div>
+            </form>
+        `;
+    }
+
+    renderColumnSelector() {
+        if (!this.config.allColumns || this.config.allColumns.length === 0) {
+            return '';
+        }
+
+        const columnHtml = this.config.allColumns.map(col =>
+            `<label class="me-2"><input type="checkbox" class="column-toggle" value="${col.key}"${this.selectedColumns.includes(col.key) ? ' checked' : ''}> ${col.label}</label>`
+        ).join('');
+
+        return `<div class="mb-2"><strong>Gösterilecek Sütunlar:</strong> ${columnHtml}</div>`;
+    }
+
+    bindEvents() {
+        const container = document.getElementById(this.config.containerId);
+        if (!container) return;
+
+        // Column selector events
+        container.querySelectorAll('.column-toggle').forEach(cb => {
+            cb.addEventListener('change', e => {
+                const col = e.target.value;
+                if (e.target.checked && !this.selectedColumns.includes(col)) {
+                    this.selectedColumns.push(col);
+                } else if (!e.target.checked && this.selectedColumns.includes(col)) {
+                    this.selectedColumns = this.selectedColumns.filter(c => c !== col);
+                }
+                this.saveColumnSelection(this.selectedColumns);
+                this.fetchData();
+            });
+        });
+
+        // Filter input events
+        const filterForm = document.getElementById(`${this.config.containerId}-filters`);
+        if (filterForm) {
+            filterForm.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        document.getElementById(`${this.config.containerId}-fetch-btn`).click();
+                    }
+                }.bind(this));
+            });
+        }
+
+        // Fetch button event
+        const fetchBtn = document.getElementById(`${this.config.containerId}-fetch-btn`);
+        if (fetchBtn) {
+            fetchBtn.addEventListener('click', () => this.fetchData());
+        }
+    }
+
+    async fetchData(url = null) {
+        const params = this.buildQueryParams();
+        const requestUrl = url || `${this.config.apiEndpoint}?${params.toString()}`;
+        const container = document.getElementById(`${this.config.containerId}-table-container`);
+        const paginationContainer = document.getElementById(`${this.config.containerId}-pagination-container`);
+        
+        container.innerHTML = '<div>Yükleniyor...</div>';
+        paginationContainer.innerHTML = '';
+        
+        try {
+            const resp = await authedFetch(requestUrl);
+            if (!resp.ok) throw new Error('Veri alınamadı');
+            const responseData = await resp.json();
+            
+            // Handle paginated response
+            let data;
+            if (responseData.results && Array.isArray(responseData.results)) {
+                data = responseData.results;
+                this.paginationData = {
+                    count: responseData.count,
+                    next: responseData.next,
+                    previous: responseData.previous,
+                    currentUrl: requestUrl
+                };
+            } else if (Array.isArray(responseData)) {
+                data = responseData;
+                this.paginationData = null;
+            } else {
+                console.log('Unexpected response format:', responseData);
+                container.innerHTML = '<div>Beklenmeyen veri formatı.</div>';
+                return;
+            }
+            
+            if (data.length === 0) {
+                container.innerHTML = '<div>Sonuç bulunamadı.</div>';
+                return;
+            }
+
+            this.renderTable(data, container);
+            this.renderPagination(paginationContainer);
+        } catch (err) {
+            container.innerHTML = `<div class="text-danger">Hata: ${err.message}</div>`;
+        }
+    }
+
+    buildQueryParams() {
+        const params = new URLSearchParams();
+        
+        // Add default parameters if specified
+        if (this.config.defaultParams) {
+            Object.entries(this.config.defaultParams).forEach(([key, value]) => {
+                params.append(key, value);
+            });
+        }
+        
+        // Add page size parameter
+        params.append('page_size', this.config.pageSize.toString());
+        
+        this.config.filters.forEach(filter => {
+            if (filter.type === 'datetime') {
+                const dateInput = document.getElementById(`${filter.key}_date`);
+                const timeInput = document.getElementById(`${filter.key}_time`);
+                if (dateInput && dateInput.value) {
+                    const timestamp = this.toTimestamp(dateInput.value, timeInput.value);
+                    if (timestamp) {
+                        params.append(filter.key, Math.floor(timestamp));
+                    }
+                }
+            } else {
+                const input = document.getElementById(filter.key);
+                if (!input) return;
+
+                let value = input.value.trim();
+                if (value) {
+                    params.append(filter.key, value);
+                }
+            }
+        });
+
+        return params;
+    }
+
+    toTimestamp(date, time) {
+        if (!date) return null;
+        const t = time || '00:00';
+        const dt = new Date(`${date}T${t}:00`);
+        return dt.getTime();
+    }
+
+    renderTable(data, container) {
+        let html = `<div class="table-responsive"><table class="table table-bordered table-sm resizable-table"><thead><tr>`;
+        
+        // Render headers
+        for (const col of this.selectedColumns) {
+            const colMeta = this.config.allColumns.find(c => c.key === col);
+            html += `<th style="position:relative;"><span>${colMeta ? colMeta.label : col}</span><span class="resize-handle" style="position:absolute;right:0;top:0;width:5px;height:100%;cursor:col-resize;"></span></th>`;
+        }
+        
+        // Add action column if needed
+        if (this.config.showEditButton || this.config.showDeleteButton) {
+            html += '<th>İşlemler</th>';
+        }
+        
+        html += '</tr></thead><tbody>';
+
+        // Render rows
+        for (const row of data) {
+            html += '<tr>';
+            for (const col of this.selectedColumns) {
+                let val = this.formatCellValue(row, col);
+                html += `<td>${val}</td>`;
+            }
+            
+            // Add action buttons
+            if (this.config.showEditButton || this.config.showDeleteButton) {
+                html += '<td>';
+                if (this.config.showEditButton) {
+                    html += `<button class="btn btn-sm btn-outline-primary edit-row-btn" data-id="${row.id}">Düzenle</button> `;
+                }
+                if (this.config.showDeleteButton) {
+                    html += `<button class="btn btn-sm btn-outline-danger delete-row-btn" data-id="${row.id}">Sil</button>`;
+                }
+                html += '</td>';
+            }
+            html += '</tr>';
+        }
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+
+        // Make columns resizable
+        this.makeTableResizable(container.querySelector('table'));
+
+        // Bind action events
+        this.bindActionEvents(data);
+    }
+
+    formatCellValue(row, col) {
+        let val = row[col];
+        
+        // Apply custom transformation if provided
+        if (this.config.onDataTransform) {
+            val = this.config.onDataTransform(row, col, val);
+        }
+
+        // Default formatting
+        if (val == null) {
+            val = '';
+        } else if (typeof val === 'boolean') {
+            val = val ? 'Evet' : 'Hayır';
+        } else if (col.includes('time') && val) {
+            val = new Date(val).toLocaleString('tr-TR');
+        } else if (col === 'issue_key' && val) {
+            val = `<a href="https://gemkom-1.atlassian.net/browse/${val}" target="_blank">${val}</a>`;
+        }
+
+        return val;
+    }
+
+    bindActionEvents(data) {
+        const container = document.getElementById(`${this.config.containerId}-table-container`);
+        
+        // Delete button events
+        if (this.config.showDeleteButton) {
+            container.querySelectorAll('.delete-row-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = btn.getAttribute('data-id');
+                    if (!confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
+                    
+                    if (this.config.onDelete) {
+                        await this.config.onDelete(id, data);
+                    }
+                });
+            });
+        }
+
+        // Edit button events
+        if (this.config.showEditButton) {
+            container.querySelectorAll('.edit-row-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = btn.getAttribute('data-id');
+                    const row = data.find(r => r.id == id);
+                    if (!row) return;
+                    
+                    if (this.config.onEdit) {
+                        await this.config.onEdit(row, data);
+                    }
+                });
+            });
+        }
+    }
+
+    makeTableResizable(table) {
+        if (!table) return;
+        
+        let ths = table.querySelectorAll('th');
+        let startX, startWidth, col;
+        
+        ths.forEach((th, idx) => {
+            const handle = th.querySelector('.resize-handle');
+            if (!handle) return;
+            
+            handle.addEventListener('mousedown', function (e) {
+                startX = e.pageX;
+                col = th;
+                startWidth = th.offsetWidth;
+                document.body.style.cursor = 'col-resize';
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        });
+        
+        function onMouseMove(e) {
+            if (!col) return;
+            let newWidth = startWidth + (e.pageX - startX);
+            if (newWidth > 30) col.style.width = newWidth + 'px';
+        }
+        
+        function onMouseUp() {
+            document.body.style.cursor = '';
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            col = null;
+        }
+    }
+
+    renderPagination(container) {
+        if (!this.paginationData) {
+            container.innerHTML = '';
+            return;
+        }
+
+        const { count, next, previous, currentUrl } = this.paginationData;
+        
+        // Calculate current page and total pages
+        const urlParams = new URLSearchParams(currentUrl.split('?')[1]);
+        const pageSize = this.config.pageSize;
+        const currentPage = parseInt(urlParams.get('page')) || 1;
+        const totalPages = Math.ceil(count / pageSize);
+
+        let paginationHtml = `
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted">
+                    Toplam ${count} kayıt, Sayfa ${currentPage} / ${totalPages}
+                </div>
+                <nav aria-label="Sayfalama">
+                    <ul class="pagination pagination-sm mb-0">
+        `;
+
+        // Previous button
+        if (previous) {
+            paginationHtml += `
+                <li class="page-item">
+                    <button class="page-link" data-url="${previous}">Önceki</button>
+                </li>
+            `;
+        } else {
+            paginationHtml += `
+                <li class="page-item disabled">
+                    <span class="page-link">Önceki</span>
+                </li>
+            `;
+        }
+
+        // Page numbers (show current page and a few around it)
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+
+        for (let i = startPage; i <= endPage; i++) {
+            if (i === currentPage) {
+                paginationHtml += `
+                    <li class="page-item active">
+                        <span class="page-link">${i}</span>
+                    </li>
+                `;
+            } else {
+                // Build URL for this page
+                const pageUrl = new URL(currentUrl);
+                pageUrl.searchParams.set('page', i.toString());
+                paginationHtml += `
+                    <li class="page-item">
+                        <button class="page-link" data-url="${pageUrl.toString()}">${i}</button>
+                    </li>
+                `;
+            }
+        }
+
+        // Next button
+        if (next) {
+            paginationHtml += `
+                <li class="page-item">
+                    <button class="page-link" data-url="${next}">Sonraki</button>
+                </li>
+            `;
+        } else {
+            paginationHtml += `
+                <li class="page-item disabled">
+                    <span class="page-link">Sonraki</span>
+                </li>
+            `;
+        }
+
+        paginationHtml += `
+                    </ul>
+                </nav>
+            </div>
+        `;
+
+        container.innerHTML = paginationHtml;
+
+        // Bind pagination events
+        container.querySelectorAll('.page-link[data-url]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = btn.getAttribute('data-url');
+                this.fetchData(url);
+            });
+        });
+    }
+
+    refresh() {
+        this.fetchData();
+    }
+} 

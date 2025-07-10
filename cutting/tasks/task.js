@@ -5,9 +5,9 @@ import { initNavbar } from '../../components/navbar.js';
 import { guardRoute, navigateTo, ROUTES } from '../../authService.js';
 import { 
     getTaskKeyFromURL, 
-    fetchTaskDetails,
-    getActiveTimer
+    fetchTaskDetails
 } from './taskApi.js';
+import { getActiveTimer } from '../cuttingService.js';
 import { 
     setCurrentIssueState,
     setCurrentTimerState,
@@ -31,7 +31,7 @@ async function initializeTaskView() {
     
     const taskKey = getTaskKeyFromURL();
     if (!taskKey) {
-        navigateTo(ROUTES.MACHINING);
+        navigateTo(ROUTES.CUTTING);
         return;
     }
     let issue = await fetchTaskDetails(taskKey);
@@ -40,7 +40,7 @@ async function initializeTaskView() {
     setCurrentTimerState(activeTimer);
     await setCurrentMachineState();
     setupTaskDisplay(activeTimer ? true : false, issue.is_hold_task);
-    setupAllHandlers(activeTimer ? true : false);
+    setupAllHandlers();
 }
 
 // Initialize when DOM is loaded

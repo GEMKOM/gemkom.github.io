@@ -1,13 +1,13 @@
 // --- taskUI.js ---
 // UI management functions for task functionality
 
-import { state} from '../machiningService.js';
-import { getSyncedNow } from '../../generic/timeService.js';
+import { state} from '../cuttingService.js';
+import { getSyncedNow } from '../../timeService.js';
 import { 
     setupStartStopHandler, 
     setupStopOnlyHandler
 } from './taskHandlers.js';
-import { formatTime } from '../../generic/formatters.js';
+import { formatTime } from '../../helpers.js';
 import { setupAllHandlers } from './taskHandlers.js';
 
 // ============================================================================

@@ -1,5 +1,5 @@
 import { authedFetch } from '../authService.js';
-import { proxyBase } from '../base.js';
+import { proxyBase, jiraBase } from '../base.js';
 import { toJiraDateTimeLocal } from './mesaiTaleplerim.js'
 
 export async function showMesaiTalebiForm() {
@@ -63,7 +63,6 @@ async function handleMesaiTalebiSubmit(e) {
         }
         // Prepare Epic (parent issue)
         const projectKey = 'MES'; // TODO: Replace with your Jira project key
-        const jiraBaseUrl = 'https://gemkom-1.atlassian.net'; // TODO: Replace if needed
         const epicSummary = `${departman} - ${new Date(start).toLocaleDateString('tr-TR', { weekday: 'long' })} - ${rows.length} Kişi`;
         const epicFields = {
             project: { key: projectKey },
@@ -73,7 +72,7 @@ async function handleMesaiTalebiSubmit(e) {
             "customfield_11173": toJiraDateTimeLocal(end)
             // Add custom fields as needed
         };
-        const epicRes = await authedFetch(proxyBase + encodeURIComponent(`${jiraBaseUrl}/rest/api/3/issue`), {
+        const epicRes = await authedFetch(proxyBase + encodeURIComponent(`${jiraBase}/rest/api/3/issue`), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fields: epicFields })
@@ -118,7 +117,7 @@ async function handleMesaiTalebiSubmit(e) {
                     },
                 // Map other fields as needed
             };
-            await authedFetch(proxyBase + encodeURIComponent(`${jiraBaseUrl}/rest/api/3/issue`), {
+            await authedFetch(proxyBase + encodeURIComponent(`${jiraBase}/rest/api/3/issue`), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fields: subTaskFields })

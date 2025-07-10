@@ -35,21 +35,6 @@ async function fetchMaintenanceRequests() {
     }
 }
 
-async function fetchMachines() {
-    try {
-        const response = await authedFetch(`${backendBase}/machines/`);
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch machines');
-        }
-        
-        const machines = await response.json();
-        return machines;
-    } catch (error) {
-        console.error('Error fetching machines:', error);
-        throw error;
-    }
-}
 
 // ============================================================================
 // CONTENT MANAGEMENT
@@ -322,7 +307,6 @@ function createRequestCard(request) {
 }
 
 function loadContent() {
-    console.log("loadContent");
     const contentContainer = document.getElementById('maintenance-content');
     
     // Clear existing content
@@ -341,11 +325,9 @@ function loadContent() {
     }
     
     else if (state.currentSection === 'create-request') {
-        console.log('create-request');
         loadMachines();
         setupMaintenanceRequestForm();
     }
-    console.log("HELLO");
 }
 
 async function loadMaintenanceRequests() {
@@ -589,21 +571,7 @@ function setupMaintenanceRequestForm() {
     });
 }
 
-export async function createMaintenanceRequest(requestData) {
-    const response = await authedFetch(`${backendBase}/machines/faults/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
-    });
-    
-    if (!response.ok) {
-        throw new Error('Failed to create maintenance request');
-    }
-    
-    return response.json();
-}
+import { createMaintenanceRequest } from './maintenanceApi.js';
 
 // ============================================================================
 // RESOLVE FUNCTIONALITY
@@ -627,8 +595,6 @@ async function resolveMaintenanceRequest(requestId, resolutionDescription) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            resolved_at: now,
-            resolved_by: getCurrentUserId(), // You'll need to implement this function
             resolution_description: resolutionDescription
         })
     });
@@ -638,16 +604,6 @@ async function resolveMaintenanceRequest(requestId, resolutionDescription) {
     }
     
     return response.json();
-}
-
-function getCurrentUserId() {
-    // Get user ID from localStorage user data
-    const userData = localStorage.getItem('user');
-    if (userData) {
-        const user = JSON.parse(userData);
-        return user.id;
-    }
-    return null;
 }
 
 // Setup resolve modal handlers
