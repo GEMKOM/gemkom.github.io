@@ -3,6 +3,7 @@ import { guardRoute } from '../authService.js';
 import { authedFetch } from '../authService.js';
 import { backendBase } from '../base.js';
 import Sidebar from '../components/sidebar.js';
+import { fetchMachines } from '../generic/machines.js';
 
 // ============================================================================
 // STATE MANAGEMENT

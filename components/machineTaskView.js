@@ -113,7 +113,7 @@ export async function createMachineTaskView({
         placeholderCard.className = 'task-card placeholder-task';
         placeholderCard.style.background = '#ffeeba'; // Distinct color
         placeholderCard.style.cursor = 'pointer';
-        placeholderCard.innerHTML = '<h3>Diğer İşler</h3><p>Makineyi bekletme (fabrika işleri, malzeme bekleme, yemek molası, izin, vs) için tıklayın</p>';
+        placeholderCard.innerHTML = '<h3>Diğer İşler</h3><p>Makineyi bekletme (Arıza, fabrika işleri, malzeme bekleme, yemek molası, izin, vs) için tıklayın</p>';
         placeholderCard.onclick = async () => {
             // Show modal to select reason_code
             let modal = document.getElementById('hold-task-modal');
