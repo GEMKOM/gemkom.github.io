@@ -22,6 +22,9 @@ export class GenericReport {
         
         this.selectedColumns = this.loadColumnSelection();
         this.paginationData = null;
+        this.filterValues = {};
+        this.lastData = null;
+        this.lastIsMobile = null;
         this.init();
     }
 
@@ -40,9 +43,24 @@ export class GenericReport {
     }
 
     init() {
+        this.isMobile = window.innerWidth <= 768;
+        this.optionsCollapsed = this.isMobile;
         this.render();
         this.bindEvents();
         this.fetchData();
+        window.addEventListener('resize', this.handleResize.bind(this));
+    }
+
+    handleResize() {
+        const wasMobile = this.isMobile;
+        this.isMobile = window.innerWidth <= 768;
+        if (wasMobile !== this.isMobile) {
+            // Reset collapse state on mode change
+            this.optionsCollapsed = this.isMobile;
+            this.render();
+            this.bindEvents();
+            this.fetchData();
+        }
     }
 
     render() {
@@ -53,17 +71,39 @@ export class GenericReport {
             <div class="row mb-3">
                 <div class="col-12">
                     <h3>${this.config.title}</h3>
-                    ${this.renderFilters()}
-                    ${this.renderColumnSelector()}
+                    <div class="collapsible-section">
+                        <button type="button" class="btn btn-link p-0 collapsible-toggle" data-section="options">
+                            ${this.optionsCollapsed ? 'Filtre ve Sütun Seçeneklerini Göster' : 'Filtre ve Sütun Seçeneklerini Gizle'}
+                        </button>
+                        <div class="collapsible-content" style="display: ${this.optionsCollapsed ? 'none' : 'block'};">
+                            ${this.renderFilters()}
+                            ${this.renderColumnSelector()}
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="row">
                 <div class="col-12">
                     <div id="${this.config.containerId}-table-container"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
                     <div id="${this.config.containerId}-pagination-container"></div>
                 </div>
             </div>
         `;
+        // Re-render table and pagination with cached data if available
+        if (this.lastData) {
+            const tableContainer = document.getElementById(`${this.config.containerId}-table-container`);
+            const paginationContainer = document.getElementById(`${this.config.containerId}-pagination-container`);
+            if (this.isMobile) {
+                this.renderCards(this.lastData, tableContainer);
+            } else {
+                this.renderTable(this.lastData, tableContainer);
+            }
+            this.renderPagination(paginationContainer);
+        }
     }
 
     renderFilters() {
@@ -75,22 +115,29 @@ export class GenericReport {
             const inputType = filter.type || 'text';
             const placeholder = filter.placeholder || '';
             const label = filter.label || filter.key;
-            
+            let value = this.filterValues[filter.key] || '';
             if (inputType === 'datetime') {
-                const defaultValue = filter.defaultValue || '';
-                const defaultTime = filter.defaultTime || '00:00';
+                let dateVal = '', timeVal = '';
+                if (value) {
+                    const d = new Date(Number(value));
+                    dateVal = d.toISOString().slice(0, 10);
+                    timeVal = d.toTimeString().slice(0, 5);
+                } else {
+                    dateVal = filter.defaultValue || '';
+                    timeVal = filter.defaultTime || '00:00';
+                }
                 return `
                     <div class="col-md-3">
                         <label for="${filter.key}" class="form-label">${label}</label>
                         <div class="input-group">
-                            <input type="date" class="form-control" id="${filter.key}_date" value="${defaultValue}">
-                            <input type="time" class="form-control" id="${filter.key}_time" value="${defaultTime}">
+                            <input type="date" class="form-control" id="${filter.key}_date" value="${dateVal}">
+                            <input type="time" class="form-control" id="${filter.key}_time" value="${timeVal}">
                         </div>
                     </div>
                 `;
             } else if (inputType === 'select') {
                 const options = filter.options ? filter.options.map(opt => 
-                    `<option value="${opt.value}">${opt.label}</option>`
+                    `<option value="${opt.value}"${value === opt.value ? ' selected' : ''}>${opt.label}</option>`
                 ).join('') : '';
                 return `
                     <div class="col-md-2">
@@ -105,7 +152,7 @@ export class GenericReport {
                 return `
                     <div class="col-md-2">
                         <label for="${filter.key}" class="form-label">${label}</label>
-                        <input type="${inputType}" class="form-control" id="${filter.key}" placeholder="${placeholder}">
+                        <input type="${inputType}" class="form-control" id="${filter.key}" placeholder="${placeholder}" value="${value}">
                     </div>
                 `;
             }
@@ -137,6 +184,16 @@ export class GenericReport {
         const container = document.getElementById(this.config.containerId);
         if (!container) return;
 
+        // Collapsible toggle
+        const btn = container.querySelector('.collapsible-toggle');
+        if (btn) {
+            btn.addEventListener('click', (e) => {
+                this.optionsCollapsed = !this.optionsCollapsed;
+                this.render();
+                this.bindEvents();
+            });
+        }
+
         // Column selector events
         container.querySelectorAll('.column-toggle').forEach(cb => {
             cb.addEventListener('change', e => {
@@ -161,13 +218,43 @@ export class GenericReport {
                         document.getElementById(`${this.config.containerId}-fetch-btn`).click();
                     }
                 }.bind(this));
+                input.addEventListener('change', (e) => {
+                    const id = input.id;
+                    if (id.endsWith('_date') || id.endsWith('_time')) {
+                        // Handled on submit
+                        return;
+                    }
+                    this.filterValues[input.name || input.id] = input.value;
+                });
             });
         }
 
         // Fetch button event
         const fetchBtn = document.getElementById(`${this.config.containerId}-fetch-btn`);
         if (fetchBtn) {
-            fetchBtn.addEventListener('click', () => this.fetchData());
+            fetchBtn.addEventListener('click', () => {
+                // Save filter values
+                if (filterForm) {
+                    this.config.filters.forEach(filter => {
+                        if (filter.type === 'datetime') {
+                            const dateInput = document.getElementById(`${filter.key}_date`);
+                            const timeInput = document.getElementById(`${filter.key}_time`);
+                            if (dateInput && dateInput.value) {
+                                const dt = new Date(`${dateInput.value}T${(timeInput && timeInput.value) ? timeInput.value : '00:00'}:00`);
+                                this.filterValues[filter.key] = dt.getTime();
+                            } else {
+                                this.filterValues[filter.key] = '';
+                            }
+                        } else {
+                            const input = document.getElementById(filter.key);
+                            if (input) {
+                                this.filterValues[filter.key] = input.value;
+                            }
+                        }
+                    });
+                }
+                this.fetchData();
+            });
         }
     }
 
@@ -206,13 +293,21 @@ export class GenericReport {
             
             if (data.length === 0) {
                 container.innerHTML = '<div>Sonuç bulunamadı.</div>';
+                this.lastData = [];
                 return;
             }
 
-            this.renderTable(data, container);
+            this.lastData = data;
+            this.lastIsMobile = this.isMobile;
+            if (this.isMobile) {
+                this.renderCards(data, container);
+            } else {
+                this.renderTable(data, container);
+            }
             this.renderPagination(paginationContainer);
         } catch (err) {
             container.innerHTML = `<div class="text-danger">Hata: ${err.message}</div>`;
+            this.lastData = null;
         }
     }
 
@@ -231,21 +326,14 @@ export class GenericReport {
         
         this.config.filters.forEach(filter => {
             if (filter.type === 'datetime') {
-                const dateInput = document.getElementById(`${filter.key}_date`);
-                const timeInput = document.getElementById(`${filter.key}_time`);
-                if (dateInput && dateInput.value) {
-                    const timestamp = this.toTimestamp(dateInput.value, timeInput.value);
-                    if (timestamp) {
-                        params.append(filter.key, Math.floor(timestamp));
-                    }
+                const val = this.filterValues[filter.key];
+                if (val) {
+                    params.append(filter.key, Math.floor(val));
                 }
             } else {
-                const input = document.getElementById(filter.key);
-                if (!input) return;
-
-                let value = input.value.trim();
-                if (value) {
-                    params.append(filter.key, value);
+                const val = this.filterValues[filter.key];
+                if (val) {
+                    params.append(filter.key, val);
                 }
             }
         });
@@ -305,6 +393,31 @@ export class GenericReport {
         this.makeTableResizable(container.querySelector('table'));
 
         // Bind action events
+        this.bindActionEvents(data);
+    }
+
+    renderCards(data, container) {
+        let html = '';
+        for (const row of data) {
+            html += '<div class="report-card mb-3 p-2 border rounded">';
+            for (const col of this.selectedColumns) {
+                const colMeta = this.config.allColumns.find(c => c.key === col);
+                let val = this.formatCellValue(row, col);
+                html += `<div class="d-flex mb-1"><span class="fw-bold me-2">${colMeta ? colMeta.label : col}:</span> <span class="flex-fill">${val}</span></div>`;
+            }
+            if (this.config.showEditButton || this.config.showDeleteButton) {
+                html += '<div class="mt-2">';
+                if (this.config.showEditButton) {
+                    html += `<button class="btn btn-sm btn-outline-primary edit-row-btn me-2" data-id="${row.id}">Düzenle</button>`;
+                }
+                if (this.config.showDeleteButton) {
+                    html += `<button class="btn btn-sm btn-outline-danger delete-row-btn" data-id="${row.id}">Sil</button>`;
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+        container.innerHTML = html;
         this.bindActionEvents(data);
     }
 

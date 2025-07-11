@@ -4,6 +4,7 @@ import { authedFetch } from '../authService.js';
 import { backendBase } from '../base.js';
 import Sidebar from '../components/sidebar.js';
 import { fetchMachines } from '../generic/machines.js';
+import { createMaintenanceRequest, resolveMaintenanceRequest } from './maintenanceApi.js';
 
 // ============================================================================
 // STATE MANAGEMENT
@@ -572,8 +573,6 @@ function setupMaintenanceRequestForm() {
     });
 }
 
-import { createMaintenanceRequest } from './maintenanceApi.js';
-
 // ============================================================================
 // RESOLVE FUNCTIONALITY
 // ============================================================================
@@ -586,26 +585,6 @@ window.resolveRequest = function(requestId) {
     const resolveModal = new bootstrap.Modal(document.getElementById('resolveModal'));
     resolveModal.show();
 };
-
-async function resolveMaintenanceRequest(requestId, resolutionDescription) {
-    const now = new Date().toISOString();
-    
-    const response = await authedFetch(`${backendBase}/machines/faults/${requestId}/`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            resolution_description: resolutionDescription
-        })
-    });
-    
-    if (!response.ok) {
-        throw new Error('Failed to resolve maintenance request');
-    }
-    
-    return response.json();
-}
 
 // Setup resolve modal handlers
 function setupResolveModal() {

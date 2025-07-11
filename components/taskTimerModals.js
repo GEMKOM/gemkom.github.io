@@ -233,10 +233,6 @@ export function createFaultReportModal(machineId) {
                         <label for="fault-description">Arıza Açıklaması:</label>
                         <textarea id="fault-description" rows="4" placeholder="Arıza detaylarını buraya yazın..." required></textarea>
                     </div>
-                    <div>
-                        <label for="is-operable">Makine çalışır durumda</label>
-                        <input class="form-check-input" type="checkbox" id="is-operable" checked>
-                    </div>
                 </div>
                 <div class="fault-modal-footer">
                     <button class="btn btn-secondary" id="fault-modal-cancel">İptal</button>
@@ -250,27 +246,15 @@ export function createFaultReportModal(machineId) {
     const submitBtn = modal.querySelector('#fault-modal-submit');
     const cancelBtn = modal.querySelector('#fault-modal-cancel');
     const closeBtn = modal.querySelector('#fault-modal-close');
-    const isBreakingCheckbox = modal.querySelector('#is-operable');
     modal.style.display = 'flex';
     descriptionTextarea.focus();
     return new Promise((resolve) => {
         function closeModal() {
             modal.style.display = 'none';
             descriptionTextarea.value = '';
-            isBreakingCheckbox.checked = true;
             resolve();
         }
         submitBtn.onclick = async () => {
-            if (!isBreakingCheckbox.checked) {
-                if (!confirm("Arıza kaydı oluşturmak istediğinize emin misiniz? Makine kullanıma kapatılacaktır.")) {
-                    closeModal();
-                    return;
-                }
-                if (!confirm("Bildireceğiniz arıza makinenin çalışmasına engel değilse lütfen 'Makine çalışır durumda' kutucuğunu işaretleyiniz. Emin misiniz?")) {
-                    closeModal();
-                    return;
-                }
-            }
             const description = descriptionTextarea.value.trim();
             if (!description) {
                 alert("Lütfen arıza açıklaması girin.");
@@ -287,7 +271,7 @@ export function createFaultReportModal(machineId) {
                     machine: machineId,
                     is_maintenance: false,
                     description: description,
-                    is_breaking: !isBreakingCheckbox.checked
+                    is_breaking: false
                 });
                 
                 if (success) {

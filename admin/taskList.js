@@ -137,7 +137,8 @@ async function renderTaskListTable() {
         const url = `${backendBase}/machining/tasks/${query}`;
         const resp = await authedFetch(url);
         if (!resp.ok) throw new Error('Liste alınamadı');
-        const data = await resp.json();
+        const result = await resp.json();
+        const data = result.results;
         if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = '<div>Sonuç bulunamadı.</div>';
             return;

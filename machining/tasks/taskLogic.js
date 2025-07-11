@@ -7,6 +7,7 @@ import { TimerWidget } from '../../components/timerWidget.js';
 import { startTimer } from './taskApi.js';
 import { getSyncedNow } from '../../generic/timeService.js';
 import { setCurrentTimerState, setCurrentMachineState } from './taskState.js';
+import { createMaintenanceRequest } from '../../maintenance/maintenanceApi.js';
 
 // ============================================================================
 // TIMER SETUP
@@ -28,6 +29,22 @@ export async function handleStartTimer(comment = null) {
         await startTimer(comment);
         setupTaskDisplay(true, state.currentIssue.is_hold_task);
         TimerWidget.triggerUpdate();
+        console.log(state.currentIssue.key);
+        // Create breaking maintenance request for W-07 tasks
+        if (state.currentIssue.key === 'W-07') {
+            try {
+                await createMaintenanceRequest({
+                    machine: state.currentMachine.id,
+                    is_maintenance: false,
+                    description: comment ? comment : `Makine arızası nedeniyle bekleme - ${state.currentIssue.name}`,
+                    is_breaking: true
+                });
+                console.log('Breaking maintenance request created for W-07 task');
+            } catch (error) {
+                console.error('Error creating maintenance request:', error);
+                // Don't show alert to user as this is a background process
+            }
+        }
         
     } catch (error) {
         console.error('Error starting timer:', error);

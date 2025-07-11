@@ -51,7 +51,8 @@ export async function createMachineTaskView({
             option.disabled = true;
             option.style.color = '#6b7280';
             option.style.fontStyle = 'italic';
-        } else if (f.is_under_maintenance) {
+        } 
+        if (f.is_under_maintenance) {
             label += ' (Bakımda)';
             option.disabled = true;
             option.style.color = '#dc2626';

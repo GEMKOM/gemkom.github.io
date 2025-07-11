@@ -51,6 +51,51 @@ export function setupTaskDisplay(hasActiveTimer, isHoldTask) {
         `
     }
     
+    // Special handling for W-07 tasks
+    if (state.currentIssue.key === 'W-07' && hasActiveTimer) {
+        // Hide all buttons for W-07 tasks with active timer
+        startBtn.style.display = 'none';
+        stopOnlyBtn.classList.add('hidden');
+        manualBtn.style.display = 'none';
+        doneBtn.style.display = 'none';
+        faultBtn.style.display = 'none';
+        backBtn.style.display = 'none';
+        
+        // Add warning message
+        const timerControls = document.querySelector('.timer-controls');
+        if (timerControls) {
+            // Remove any existing warning message
+            const existingWarning = timerControls.querySelector('.w-07-warning');
+            if (existingWarning) {
+                existingWarning.remove();
+            }
+            
+            // Add new warning message
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'w-07-warning';
+            warningDiv.style.cssText = `
+                color: #dc3545;
+                font-weight: bold;
+                text-align: center;
+                margin-top: 10px;
+                padding: 10px;
+                background-color: #f8d7da;
+                border: 1px solid #f5c6cb;
+                border-radius: 5px;
+                width: 100%;
+            `;
+            warningDiv.textContent = 'Zamanlayıcı arızanız bakım ekibi tarafından çözüldüğünde otomatik olarak durdurulacaktır.';
+            timerControls.appendChild(warningDiv);
+        }
+        return;
+    }
+    
+    // Remove any existing W-07 warning message for other cases
+    const existingWarning = document.querySelector('.w-07-warning');
+    if (existingWarning) {
+        existingWarning.remove();
+    }
+    
     // Handle hold task restrictions
     if (isHoldTask) {
         // Hide "Tamamlandı" button for hold tasks

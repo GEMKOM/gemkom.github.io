@@ -376,7 +376,7 @@ export class TimerWidget {
                                 latest.stopped_by !== currentUser?.username;
                             
                             if (stoppedBySomeoneElse) {
-                                let name = 'yönetici';
+                                let name = latest.username;
                                 if (latest && (latest.stopped_by_first_name || latest.stopped_by_last_name)) {
                                     name = `${latest.stopped_by_first_name || ''} ${latest.stopped_by_last_name || ''}`.trim();
                                 }
