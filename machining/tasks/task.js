@@ -34,11 +34,11 @@ async function initializeTaskView() {
         navigateTo(ROUTES.MACHINING);
         return;
     }
+    await setCurrentMachineState();
     let issue = await fetchTaskDetails(taskKey);
     const activeTimer = await getActiveTimer(taskKey);
     setCurrentIssueState(issue);
     setCurrentTimerState(activeTimer);
-    await setCurrentMachineState();
     setupTaskDisplay(activeTimer ? true : false, issue.is_hold_task);
     setupAllHandlers(activeTimer ? true : false);
 }

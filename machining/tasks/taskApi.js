@@ -55,7 +55,7 @@ export async function fetchTaskDetails(taskKey=null) {
 }
 
 export async function getActiveTimer(taskKey) {
-    const response = await authedFetch(`${backendBase}/machining/timers?issue_key=${taskKey}&is_active=true`);
+    const response = await authedFetch(`${backendBase}/machining/timers?issue_key=${taskKey}&is_active=true&machine_fk=${state.currentMachine.id}`);
     
     if (!response.ok) {
         return null;

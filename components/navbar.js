@@ -78,14 +78,6 @@ export function createNavbar() {
     } else {
         machiningTab.style.display = 'none';
     }
-    
-    // Show cutting tab if user is cutting team or admin
-    const cuttingTab = navbar.querySelector('.cutting-only');
-    if (isAdmin() || (user && user.team === 'cutting')) {
-        cuttingTab.style.display = 'block';
-    } else {
-        cuttingTab.style.display = 'none';
-    }
 
     return navbar;
 }
@@ -252,14 +244,6 @@ export function initNavbar() {
       } else {
           machiningTab.style.display = 'none';
       }
-      
-      // Show cutting tab if user is cutting team or admin
-    //   const cuttingTab = navbarContainer.querySelector('.cutting-only');
-    //   if (isAdmin() || user.team === 'cutting') {
-    //       cuttingTab.style.display = 'block';
-    //   } else {
-    //       cuttingTab.style.display = 'none';
-    //   }
     }
     renderNavbar();
 }

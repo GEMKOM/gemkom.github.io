@@ -5,6 +5,7 @@ import { backendBase } from '../base.js';
 import { authedFetch } from '../authService.js';
 import { getSyncedNow } from '../generic/timeService.js'
 import { stopTimerShared } from '../machining/machiningService.js';
+import { getMachine } from '../generic/machines.js';
 
 export async function createMaintenanceRequest(requestData) {
     const response = await authedFetch(`${backendBase}/machines/faults/`, {
@@ -52,14 +53,15 @@ export async function resolveMaintenanceRequest(requestId, resolutionDescription
     });
 
     // Stop active timers for the machine if any exist
-    if (machineId) {
-        const timers = await getActiveTimersForMachine(machineId);
+    if (machineId && requestData.is_breaking) {
+        const machine = await getMachine(machineId);
+        const timers = machine.active_timer_ids;
         console.log(timers);
         if (timers.length > 0) {
             console.log('Stopping timers');
-            for (const timer of timers) {
+            for (const timerId of timers) {
                 await stopTimerShared({
-                    timerId: timer.id,
+                    timerId: timerId,
                     finishTime: getSyncedNow(),
                     syncToJira: false
                 });
@@ -72,19 +74,4 @@ export async function resolveMaintenanceRequest(requestId, resolutionDescription
     }
     
     return response.json();
-}
-
-export async function getActiveTimersForMachine(machineId) {
-    const response = await authedFetch(`${backendBase}/machining/timers/?machine_id=${machineId}&is_active=true`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
-    
-    if (!response.ok) {
-        throw new Error('Failed to fetch active timers');
-    }
-    const data = await response.json();
-    return data.results;
 }

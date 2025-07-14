@@ -1,5 +1,5 @@
 // components/machineTaskView.js
-// Generic machine/task view for machining, cutting, etc.
+// Generic machine/task view for machining etc.
 
 export async function createMachineTaskView({
     containerId = 'main-view',

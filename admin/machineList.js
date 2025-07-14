@@ -39,6 +39,13 @@ export async function showMachineList(team) {
             .toggle-icon.rotated {
                 transform: rotate(90deg);
             }
+            .filter-container {
+                margin-bottom: 20px;
+                padding: 15px;
+                background-color: #f8f9fa;
+                border-radius: 5px;
+                border: 1px solid #dee2e6;
+            }
         </style>
         
         <!-- Edit Machine Modal -->
@@ -123,71 +130,51 @@ export async function showMachineList(team) {
                         <h5 class="mb-0">Makine Listesi</h5>
                     </div>
                     <div class="card-body">
+                        <div class="filter-container">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="used-in-filter" class="form-label">Kullanım Alanına Göre Filtrele</label>
+                                    <select class="form-select" id="used-in-filter">
+                                        <option value="">Tümü</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="status-filter" class="form-label">Duruma Göre Filtrele</label>
+                                    <select class="form-select" id="status-filter">
+                                        <option value="">Tümü</option>
+                                        <option value="active">Aktif</option>
+                                        <option value="inactive">Pasif</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button class="btn btn-secondary" id="clear-filters">
+                                        Filtreleri Temizle
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         <div id="machine-list-table-container">Yükleniyor...</div>
                     </div>
                 </div>
             </div>
         </div>
     `;
+    
     try {
         const machines = await fetchMachines(team);
-        const tableHtml = `
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Makine Adı</th>
-                        <th>Makine Tipi</th>
-                        <th>Özellikler</th>
-                        <th>İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${machines.map((machine, index) => `
-                        <tr>
-                            <td><strong>${machine.name || ''}</strong></td>
-                            <td>${machine.machine_type_label || ''}</td>
-                            <td>
-                                ${machine.properties && typeof machine.properties === 'object' && Object.keys(machine.properties).length > 0 ? `
-                                    <a href="#" class="properties-toggle" data-machine-index="${index}">
-                                        <span class="toggle-icon">▶</span>
-                                        <span class="toggle-text">Özellikleri Göster (${Object.keys(machine.properties).length})</span>
-                                    </a>
-                                    <div class="properties-content" id="properties-${index}">
-                                        <table class="table table-sm mb-0 machine-properties-table">
-                                            <tbody>
-                                                ${Object.entries(machine.properties).map(([key, value]) => `
-                                                    <tr><td class="key-cell">${key}</td><td class="value-cell">${renderPropertyValue(value)}</td></tr>
-                                                `).join('')}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ` : '<em>Özellik yok</em>'}
-                            </td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <button class="btn btn-primary btn-sm edit-machine-btn" data-machine-id="${machine.id}" data-machine-data='${JSON.stringify(machine)}'>
-                                        <i class="bi bi-pencil"></i> Düzenle
-                                    </button>
-                                    <button class="btn btn-danger btn-sm delete-machine-btn ms-1" data-machine-id="${machine.id}" data-machine-name="${machine.name}">
-                                        <i class="bi bi-trash"></i> Sil
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
-        document.getElementById('machine-list-table-container').innerHTML = tableHtml;
         
-        // Setup toggle functionality
-        setupPropertiesToggles();
+        // Store machines globally for filtering
+        window.allMachines = machines;
         
-        // Setup edit functionality
-        setupEditMachineButtons();
+        // Populate filter dropdowns
+        populateFilterDropdowns(machines);
         
-        // Setup delete functionality
-        setupDeleteMachineButtons();
+        // Render initial table
+        renderMachineTable(machines);
+        
+        // Setup filter functionality
+        setupFilterHandlers();
+        
     } catch (err) {
         document.getElementById('machine-list-table-container').innerHTML = 'Bir hata oluştu.';
     }
@@ -484,4 +471,144 @@ async function handleDeleteMachine(machineId, machineName) {
         console.error('Error deleting machine:', error);
         alert('Makine silinirken hata oluştu.');
     }
+}
+
+// ============================================================================
+// FILTERING FUNCTIONS
+// ============================================================================
+
+function populateFilterDropdowns(machines) {
+    const usedInFilter = document.getElementById('used-in-filter');
+    const statusFilter = document.getElementById('status-filter');
+    
+    if (usedInFilter) {
+        // Get unique used_in values
+        const usedInValues = [...new Set(machines.map(m => m.used_in).filter(Boolean))];
+        usedInValues.sort();
+        
+        // Add options
+        usedInValues.forEach(value => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            usedInFilter.appendChild(option);
+        });
+    }
+}
+
+function setupFilterHandlers() {
+    const usedInFilter = document.getElementById('used-in-filter');
+    const statusFilter = document.getElementById('status-filter');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    
+    if (usedInFilter) {
+        usedInFilter.addEventListener('change', applyFilters);
+    }
+    
+    if (statusFilter) {
+        statusFilter.addEventListener('change', applyFilters);
+    }
+    
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', clearFilters);
+    }
+}
+
+function applyFilters() {
+    const usedInFilter = document.getElementById('used-in-filter');
+    const statusFilter = document.getElementById('status-filter');
+    
+    let filteredMachines = [...window.allMachines];
+    
+    // Filter by used_in
+    if (usedInFilter && usedInFilter.value) {
+        filteredMachines = filteredMachines.filter(machine => machine.used_in === usedInFilter.value);
+    }
+    
+    // Filter by status
+    if (statusFilter && statusFilter.value) {
+        const isActive = statusFilter.value === 'active';
+        filteredMachines = filteredMachines.filter(machine => machine.is_active === isActive);
+    }
+    
+    renderMachineTable(filteredMachines);
+}
+
+function clearFilters() {
+    const usedInFilter = document.getElementById('used-in-filter');
+    const statusFilter = document.getElementById('status-filter');
+    
+    if (usedInFilter) usedInFilter.value = '';
+    if (statusFilter) statusFilter.value = '';
+    
+    renderMachineTable(window.allMachines);
+}
+
+function renderMachineTable(machines) {
+    const tableHtml = `
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Makine Adı</th>
+                    <th>Makine Tipi</th>
+                    <th>Kullanım Alanı</th>
+                    <th>Durum</th>
+                    <th>Özellikler</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${machines.map((machine, index) => `
+                    <tr>
+                        <td><strong>${machine.name || ''}</strong></td>
+                        <td>${machine.machine_type_label || ''}</td>
+                        <td>${machine.used_in || '-'}</td>
+                        <td>
+                            <span class="badge ${machine.is_active ? 'bg-success' : 'bg-secondary'}">
+                                ${machine.is_active ? 'Aktif' : 'Pasif'}
+                            </span>
+                        </td>
+                        <td>
+                            ${machine.properties && typeof machine.properties === 'object' && Object.keys(machine.properties).length > 0 ? `
+                                <a href="#" class="properties-toggle" data-machine-index="${index}">
+                                    <span class="toggle-icon">▶</span>
+                                    <span class="toggle-text">Özellikleri Göster (${Object.keys(machine.properties).length})</span>
+                                </a>
+                                <div class="properties-content" id="properties-${index}">
+                                    <table class="table table-sm mb-0 machine-properties-table">
+                                        <tbody>
+                                            ${Object.entries(machine.properties).map(([key, value]) => `
+                                                <tr><td class="key-cell">${key}</td><td class="value-cell">${renderPropertyValue(value)}</td></tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : '<em>Özellik yok</em>'}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-primary btn-sm edit-machine-btn" data-machine-id="${machine.id}" data-machine-data='${JSON.stringify(machine)}'>
+                                    <i class="bi bi-pencil"></i> Düzenle
+                                </button>
+                                <button class="btn btn-danger btn-sm delete-machine-btn ms-1" data-machine-id="${machine.id}" data-machine-name="${machine.name}">
+                                    <i class="bi bi-trash"></i> Sil
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    
+    document.getElementById('machine-list-table-container').innerHTML = tableHtml;
+    
+    // Setup toggle functionality
+    setupPropertiesToggles();
+    
+    // Setup edit functionality
+    setupEditMachineButtons();
+    
+    // Setup delete functionality
+    setupDeleteMachineButtons();
 } 

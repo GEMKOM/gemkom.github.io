@@ -13,8 +13,7 @@ export const ROUTES = {
     ADMIN: '/admin/',
     MACHINING: '/machining/',
     MACHINING_TASKS: '/machining/tasks/',
-    MAINTENANCE: '/maintenance/',
-    CUTTING: '/cutting/'
+    MAINTENANCE: '/maintenance/'
 };
 
 // Track if we're currently redirecting to prevent loops
@@ -118,8 +117,6 @@ export function navigateByTeam() {
         navigateTo(ROUTES.MACHINING);
     } else if (user.team === 'maintenance') {
         navigateTo(ROUTES.MAINTENANCE);
-    } else if (user.team === 'cutting') {
-        navigateTo(ROUTES.CUTTING);
     }
 }
 

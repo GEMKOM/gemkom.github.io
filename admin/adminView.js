@@ -19,7 +19,7 @@ export async function updateActiveTimers() {
         tr.innerHTML = `
             <td>${t.username}</td>
             <td>${t.machine_name}</td>
-            <td><a href="https://gemkom-1.atlassian.net/browse/${t.issue_key}" target="_blank">${t.issue_key}</a></td>
+            <td><a href="#" class="task-info-link" data-task='${JSON.stringify(t)}'>${t.issue_key}</a></td>
             <td id="timer-${t.id}">${formatDuration(t.start_time)}</td>
             <td>
                 <button class="btn btn-success btn-sm save-jira" data-timer-id="${t.id}">Jira'ya Kaydet</button>
@@ -29,6 +29,15 @@ export async function updateActiveTimers() {
         tbody.appendChild(tr);
         // Start frontend timer
         startTimerInterval(t.id, t.start_time);
+    });
+    
+    // Add event listeners for task info links
+    document.querySelectorAll('.task-info-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const taskData = JSON.parse(link.getAttribute('data-task'));
+            showTaskInfoModal(taskData);
+        });
     });
 }
 
@@ -69,6 +78,109 @@ export async function updateMachines() {
             <td></td>
         `;
         tbody.appendChild(tr);
+    });
+}
+
+function showTaskInfoModal(taskData) {
+    // Remove existing modal if present
+    const existingModal = document.getElementById('task-info-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal HTML
+    const modalHtml = `
+        <div class="modal" tabindex="-1" id="task-info-modal" style="display:none; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:1050; align-items:center; justify-content:center;">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Görev Bilgileri - ${taskData.issue_key}</h5>
+                        <button type="button" class="btn-close" id="close-task-info-modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Görev Adı:</strong><br>
+                                <span>${taskData.issue_name || 'Belirtilmemiş'}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>İş No:</strong><br>
+                                <span>${taskData.job_no || 'Belirtilmemiş'}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        ${taskData.issue_is_hold_task ? `
+                        <div class="row">
+                            <div class="col-md-12">
+                                <strong>Yorum:</strong><br>
+                                <span>${taskData.comment || 'Belirtilmemiş'}</span>
+                            </div>
+                        </div>
+                        ` : `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Resim No:</strong><br>
+                                <span>${taskData.image_no || 'Belirtilmemiş'}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Pozisyon No:</strong><br>
+                                <span>${taskData.position_no || 'Belirtilmemiş'}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Adet:</strong><br>
+                                <span>${taskData.quantity || 'Belirtilmemiş'}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Makine:</strong><br>
+                                <span>${taskData.machine_name || 'Belirtilmemiş'}</span>
+                            </div>
+                        </div>
+                        `}
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Kullanıcı:</strong><br>
+                                <span>${taskData.username || 'Belirtilmemiş'}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Başlangıç Zamanı:</strong><br>
+                                <span>${new Date(taskData.start_time).toLocaleString('tr-TR')}</span>
+                            </div>
+                        </div>
+                        ${taskData.issue_is_hold_task ? `
+                        <hr>
+                        <div class="alert alert-warning">
+                            <strong>⚠️ Bu görev özel görevler kategorisindedir.</strong>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="close-task-info-btn">Kapat</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    const modal = document.getElementById('task-info-modal');
+    
+    // Show modal
+    modal.style.display = 'flex';
+    
+    // Add event listeners for modal controls
+    document.getElementById('close-task-info-modal').onclick = () => { modal.style.display = 'none'; };
+    document.getElementById('close-task-info-btn').onclick = () => { modal.style.display = 'none'; };
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
     });
 }
 
