@@ -63,14 +63,23 @@ export async function updateMachines() {
     const tbody = document.getElementById('machines-list');
     tbody.innerHTML = '';
     // Fetch machines directly from the backend
-    const res = await authedFetch(`${backendBase}/machines`);
-    if (!res.ok) {
-        tbody.innerHTML = `<tr><td colspan="3" class="text-danger text-center">Makine verileri alınamadı</td></tr>`;
-        return;
-    }
-    const machines = await res.json();
+    const { fetchMachines } = await import('../generic/machines.js');
+    const machines = await fetchMachines('machining');
     machines.forEach(u => {
-        const badge = `<span class="badge rounded-pill ${u.has_active_timer ? 'bg-success' : 'bg-danger'}">${u.has_active_timer ? 'Aktif' : 'Pasif'}</span>`;
+        let badgeClass, badgeText;
+        
+        if (u.is_under_maintenance) {
+            badgeClass = 'bg-danger';
+            badgeText = 'Arızalı';
+        } else if (u.has_active_timer) {
+            badgeClass = 'bg-success';
+            badgeText = 'Aktif';
+        } else {
+            badgeClass = 'bg-secondary';
+            badgeText = 'Pasif';
+        }
+        
+        const badge = `<span class="badge rounded-pill ${badgeClass} fs-6 px-3 py-2">${badgeText}</span>`;
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${u.name}</td>

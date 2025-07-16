@@ -261,6 +261,30 @@ function createRequestCard(request) {
         </div>
     `;
     
+    // Create collapsible resolution description for resolved requests
+    let collapsibleResolutionDescription = '';
+    if (request.resolved_at && request.resolution_description) {
+        const resolutionId = `resolution-${request.id}`;
+        const resolutionContent = request.resolution_description;
+        
+        collapsibleResolutionDescription = `
+            <div class="description-toggle-container mt-2">
+                <button class="btn btn-link btn-sm p-0 description-toggle" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#${resolutionId}" 
+                        aria-expanded="false" 
+                        aria-controls="${resolutionId}">
+                    <strong>Çözüm Açıklamasını Görüntüle</strong> ▼
+                </button>
+                <div class="collapse" id="${resolutionId}">
+                    <div class="description-content mt-2">
+                        ${resolutionContent}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
     // Add resolve button for unresolved requests
     const resolveButton = !request.resolved_at ? `
         <div class="mt-2">
@@ -290,6 +314,7 @@ function createRequestCard(request) {
                         </div>
                         <div class="card-text mt-2">
                             ${collapsibleDescription}
+                            ${collapsibleResolutionDescription}
                         </div>
                         ${resolveButton}
                     </div>

@@ -37,6 +37,7 @@ function buildTaskListQuery(page = 1) {
     const completion_date_gte = document.getElementById('completion_date_gte').value;
     const completion_date_lte = document.getElementById('completion_date_lte').value;
     const status = document.getElementById('status_filter').value;
+    const machine_filter = document.getElementById('machine_filter').value;
     let params = [];
     // Accept numbers for TI Numarası and prepend 'TI-' if needed
     if (key) {
@@ -60,6 +61,7 @@ function buildTaskListQuery(page = 1) {
     }
     if (status === 'active') params.push('completion_date__isnull=true');
     if (status === 'completed') params.push('completion_date__isnull=false');
+    if (machine_filter) params.push(`machine_fk=${encodeURIComponent(machine_filter)}`);
     params.push(`page=${page}`);
     params.push(`page_size=50`);
     // Add ordering param if set
@@ -170,6 +172,13 @@ export async function showTaskListSection() {
                             <option value="completed">Tamamlanmış</option>
                         </select>
                     </div>
+                    <div class="col-md-2">
+                        <label for="machine_filter" class="form-label">Makine</label>
+                        <select class="form-select" id="machine_filter">
+                            <option value="">Tüm Makineler</option>
+                            <!-- Machine options will be loaded dynamically -->
+                        </select>
+                    </div>
                     <div class="col-md-2 mt-2">
                         <button type="button" id="fetch-task-list-btn" class="btn btn-primary w-100">Listele</button>
                     </div>
@@ -191,6 +200,7 @@ export async function showTaskListSection() {
     // Fetch machines for dropdown
     try {
         availableMachines = await fetchMachines('machining');
+        populateMachineFilter(availableMachines);
     } catch (error) {
         console.error('Error fetching machines:', error);
         availableMachines = [];
@@ -212,6 +222,34 @@ export async function showTaskListSection() {
                 document.getElementById('fetch-task-list-btn').click();
             }
         });
+    });
+}
+
+    // Add Enter key support for all filter inputs
+    document.querySelectorAll('#task-list-filters input, #task-list-filters select').forEach(input => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('fetch-task-list-btn').click();
+            }
+        });
+    });
+
+
+// Function to populate machine filter dropdown
+function populateMachineFilter(machines) {
+    const machineFilter = document.getElementById('machine_filter');
+    if (!machineFilter) return;
+    
+    // Clear existing options except the first one
+    machineFilter.innerHTML = '<option value="">Tüm Makineler</option>';
+    
+    // Add machine options
+    machines.forEach(machine => {
+        const option = document.createElement('option');
+        option.value = machine.id;
+        option.textContent = machine.name || `Makine ${machine.id}`;
+        machineFilter.appendChild(option);
     });
 }
 

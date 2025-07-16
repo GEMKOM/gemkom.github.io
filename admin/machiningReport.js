@@ -9,7 +9,6 @@ import { extractResultsFromResponse } from '../generic/paginationHelper.js';
 export async function showMachiningLiveReport() {
     const mainContent = document.querySelector('.admin-main-content .container-fluid');
     if (!mainContent) return;
-    const machines = await fetchMachines('machining');
     mainContent.innerHTML = `
         <div class="d-flex justify-content-end mb-3">
             <button id="refresh-btn" class="btn btn-primary"> ⟳ Yenile</button>
