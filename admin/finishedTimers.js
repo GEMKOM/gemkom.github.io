@@ -33,6 +33,7 @@ export function showFinishedTimers() {
 
     // Set default values for date inputs (today for finish, 7 days ago for start)
     const today = new Date();
+    const yesterday = new Date(Date.now() - 86400000);
 
     // Configure the generic report
     const report = new GenericReport({
@@ -70,7 +71,7 @@ export function showFinishedTimers() {
                 key: 'start_after',
                 label: 'Başlangıç Tarihi',
                 type: 'datetime',
-                defaultValue: today.toISOString().slice(0, 10),
+                defaultValue: yesterday.toISOString().slice(0, 10),
                 defaultTime: '07:00'
             },
             {

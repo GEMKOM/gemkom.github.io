@@ -107,6 +107,7 @@ export function showMachiningDetailedReport() {
             const resp = await authedFetch(url);
             if (!resp.ok) throw new Error('Rapor alınamadı');
             const data = await resp.json();
+            console.log(data);
             let mergedData = [];
             let groupLabel = 'Grup';
             if (groupBy === 'user') {
@@ -123,7 +124,7 @@ export function showMachiningDetailedReport() {
                 groupLabel = 'Makine';
                 const machines = await fetchMachines('machining');
                 mergedData = machines.map(machine => {
-                    const found = data.find(row => row.group === machine.name);
+                    const found = data.find(row => row.group === machine.id);
                     return {
                         group: machine.name || machine.id,
                         total_hours: found ? found.total_hours : 0

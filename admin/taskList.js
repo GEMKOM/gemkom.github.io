@@ -384,7 +384,18 @@ async function renderTaskListTable(page = currentPage) {
                     if (newValue !== currentValue) {
                         // Show loading state
                         this.innerHTML = '<small class="text-muted">Kaydediliyor...</small>';
-                        await updateTaskField(key, field, newValue, type);
+                        const success = await updateTaskField(key, field, newValue, type);
+                        if (success) {
+                            // Update the cell content with new value
+                            updateCellContent(this, field, newValue, type);
+                            this.removeAttribute('data-original-content');
+                            this.classList.remove('editing');
+                        } else {
+                            // Restore original content on error
+                            this.innerHTML = this.getAttribute('data-original-content');
+                            this.removeAttribute('data-original-content');
+                            this.classList.remove('editing');
+                        }
                     } else {
                         this.innerHTML = this.getAttribute('data-original-content');
                         this.removeAttribute('data-original-content');
@@ -419,14 +430,39 @@ async function renderTaskListTable(page = currentPage) {
                 const key = btn.getAttribute('data-key');
                 if (!key) return;
                 if (!window.confirm('Bu görevi silmek istediğinize emin misiniz?')) return;
+                
+                // Show loading state on the button
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+                
                 try {
                     const resp = await authedFetch(`${backendBase}/machining/tasks/${key}/`, {
                         method: 'DELETE',
                     });
                     if (!resp.ok) throw new Error('Silme başarısız');
-                    await renderTaskListTable(currentPage);
+                    
+                    // Remove the row from the table
+                    const row = btn.closest('tr');
+                    if (row) {
+                        row.style.transition = 'opacity 0.3s ease-out';
+                        row.style.opacity = '0';
+                        setTimeout(() => {
+                            row.remove();
+                            
+                            // Check if table is empty and show message
+                            const tbody = row.closest('tbody');
+                            if (tbody && tbody.children.length === 0) {
+                                const tableContainer = document.getElementById('task-list-table-container');
+                                tableContainer.innerHTML = '<div>Sonuç bulunamadı.</div>';
+                            }
+                        }, 300);
+                    }
                 } catch (err) {
                     alert('Hata: ' + err.message);
+                    // Restore button state on error
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
             });
         });
@@ -488,14 +524,36 @@ async function updateTaskField(key, field, value, type) {
             if (!resp.ok) throw new Error('Güncelleme başarısız');
         }
         
-        // Refresh the table to show updated data
-        await renderTaskListTable(currentPage);
+        return true; // Success
         
     } catch (err) {
         alert('Hata: ' + err.message);
-        // Refresh table to revert any visual changes
-        await renderTaskListTable(currentPage);
+        return false; // Error
     }
+}
+
+// Function to update cell content without refreshing the table
+function updateCellContent(cell, field, value, type) {
+    let displayValue = '';
+    
+    if (field === 'status') {
+        displayValue = value === 'completed' ? 
+            '<span class="badge bg-primary">Tamamlandı</span>' : 
+            '<span class="badge bg-success">Aktif</span>';
+    } else if (field === 'finish_time') {
+        displayValue = value ? new Date(value).toLocaleDateString('tr-TR') : '';
+    } else if (field === 'estimated_hours') {
+        displayValue = value ? `${value}` : '';
+    } else if (field === 'machine_name') {
+        // Find machine name from available machines
+        const machine = availableMachines.find(m => m.id == value);
+        displayValue = machine ? machine.name : '';
+    } else {
+        displayValue = value || '';
+    }
+    
+    cell.innerHTML = displayValue;
+    cell.setAttribute('data-value', value);
 }
 
 function renderPagination(result, currentPage) {

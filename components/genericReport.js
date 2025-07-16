@@ -22,9 +22,10 @@ export class GenericReport {
         
         this.selectedColumns = this.loadColumnSelection();
         this.paginationData = null;
-        this.filterValues = {};
+        this.filterValues = this.initializeFilterValues();
         this.lastData = null;
         this.lastIsMobile = null;
+        this.currentOrdering = { field: 'finish_time', direction: 'desc' };
         this.init();
     }
 
@@ -40,6 +41,30 @@ export class GenericReport {
     saveColumnSelection(columns) {
         const storageKey = `${this.config.containerId}Columns`;
         localStorage.setItem(storageKey, JSON.stringify(columns));
+    }
+
+    initializeFilterValues() {
+        const values = {};
+        
+        if (this.config.filters) {
+            this.config.filters.forEach(filter => {
+                if (filter.defaultValue !== undefined) {
+                    if (filter.type === 'datetime') {
+                        // For datetime filters, create a timestamp from default date and time
+                        const dateVal = filter.defaultValue;
+                        const timeVal = filter.defaultTime || '00:00';
+                        const timestamp = this.toTimestamp(dateVal, timeVal);
+                        if (timestamp) {
+                            values[filter.key] = timestamp;
+                        }
+                    } else {
+                        values[filter.key] = filter.defaultValue;
+                    }
+                }
+            });
+        }
+        
+        return values;
     }
 
     init() {
@@ -321,6 +346,13 @@ export class GenericReport {
             });
         }
         
+        // Add ordering if set
+        if (this.currentOrdering.field) {
+            const prefix = this.currentOrdering.direction === 'desc' ? '-' : '';
+            const orderingField = this.getOrderingField(this.currentOrdering.field);
+            params.append('ordering', `${prefix}${orderingField}`);
+        }
+        
         // Add page size parameter
         params.append('page_size', this.config.pageSize.toString());
         
@@ -354,7 +386,11 @@ export class GenericReport {
         // Render headers
         for (const col of this.selectedColumns) {
             const colMeta = this.config.allColumns.find(c => c.key === col);
-            html += `<th style="position:relative;"><span>${colMeta ? colMeta.label : col}</span><span class="resize-handle" style="position:absolute;right:0;top:0;width:5px;height:100%;cursor:col-resize;"></span></th>`;
+            let arrow = '';
+            if (this.currentOrdering.field === col) {
+                arrow = this.currentOrdering.direction === 'asc' ? ' ▲' : ' ▼';
+            }
+            html += `<th class="sortable-col" data-key="${col}" style="position:relative;cursor:pointer;"><span>${colMeta ? colMeta.label : col}${arrow}</span><span class="resize-handle" style="position:absolute;right:0;top:0;width:5px;height:100%;cursor:col-resize;"></span></th>`;
         }
         
         // Add action column if needed
@@ -394,6 +430,9 @@ export class GenericReport {
 
         // Bind action events
         this.bindActionEvents(data);
+        
+        // Bind sorting events
+        this.bindSortingEvents();
     }
 
     renderCards(data, container) {
@@ -508,6 +547,47 @@ export class GenericReport {
             document.removeEventListener('mouseup', onMouseUp);
             col = null;
         }
+    }
+
+    getOrderingField(field) {
+        // Map frontend field names to backend field names for ordering
+        const fieldMapping = {
+            'job_no': 'issue_key__job_no',
+            'image_no': 'issue_key__image_no',
+            'position_no': 'issue_key__position_no',
+            'quantity': 'issue_key__quantity',
+            'machine_name': 'machine_fk__name',
+            'username': 'user__username',
+            'stopped_by_first_name': 'stopped_by__first_name',
+            'stopped_by_last_name': 'stopped_by__last_name',
+            'issue_name': 'issue_key__name',
+            'issue_is_hold_task': 'issue_key__is_hold_task'
+        };
+        
+        return fieldMapping[field] || field;
+    }
+
+    bindSortingEvents() {
+        const container = document.getElementById(`${this.config.containerId}-table-container`);
+        if (!container) return;
+        
+        container.querySelectorAll('.sortable-col').forEach(th => {
+            th.addEventListener('click', () => {
+                const key = th.getAttribute('data-key');
+                if (!key) return;
+                
+                if (this.currentOrdering.field === key) {
+                    // Toggle direction
+                    this.currentOrdering.direction = this.currentOrdering.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.currentOrdering.field = key;
+                    this.currentOrdering.direction = 'asc';
+                }
+                
+                // Refresh data with new ordering
+                this.fetchData();
+            });
+        });
     }
 
     renderPagination(container) {
