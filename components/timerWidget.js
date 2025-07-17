@@ -4,6 +4,7 @@ import { syncServerTime, getSyncedNow } from '../generic/timeService.js';
 import { backendBase } from '../base.js';
 import { authedFetch, navigateTo, ROUTES } from '../authService.js';
 import { extractResultsFromResponse } from '../generic/paginationHelper.js';
+import { fetchTimers } from '../generic/timers.js';
 
 /* <button class="timer-widget-stop" onclick="window.timerWidget.stopTimer(${timer.id})">
     Durdur
@@ -196,14 +197,9 @@ export class TimerWidget {
 
     async loadActiveTimers() {
         try {
-            const now = new Date();
-            const startAfter = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(); // 24 hours ago in ISO format
-            const response = await authedFetch(`${backendBase}/machining/timers/?is_active=true`);
-            if (response.ok) {
-                const responseData = await response.json();
-                this.activeTimers = extractResultsFromResponse(responseData);
-                return true;
-            }
+            const response = await fetchTimers(true);
+            this.activeTimers = extractResultsFromResponse(response);
+            return true;
         } catch (error) {
             console.error('Error loading active timers:', error);
             return false;
@@ -359,10 +355,9 @@ export class TimerWidget {
             try {
                 const now = Date.now(); // milliseconds
                 const startAfterTs = Math.floor((now - 24 * 60 * 60 * 1000) / 1000); // 24 hours ago, in seconds
-                const response = await authedFetch(`${backendBase}/machining/timers/?start_after=${startAfterTs}`);
+                const response = await fetchTimers(null, null, null, startAfterTs);
                 if (response.ok) {
-                    const responseData = await response.json();
-                    const latestTimers = extractResultsFromResponse(responseData);
+                    const latestTimers = extractResultsFromResponse(response);
                     // Get current user information
                     const currentUser = JSON.parse(localStorage.getItem('user'));
                     

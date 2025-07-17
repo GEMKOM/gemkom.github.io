@@ -2,12 +2,10 @@
 // API calls and data fetching for task functionality
 
 import { state } from '../machiningService.js';
-import { proxyBase, backendBase, jiraBase } from '../../base.js';
+import { backendBase } from '../../base.js';
 import { authedFetch, navigateTo, ROUTES } from '../../authService.js';
-import { mapJiraIssueToTask } from '../../generic/formatters.js';
 import { getSyncedNow, syncServerTime } from '../../generic/timeService.js';
 import { setCurrentTimerState, setCurrentMachineState } from './taskState.js';
-import { extractFirstResultFromResponse } from '../../generic/paginationHelper.js';
 
 // ============================================================================
 // TASK DATA FETCHING
@@ -30,15 +28,12 @@ export async function fetchTaskDetails(taskKey=null) {
         }
     }
     else if(params.get('hold') !== '1'){
-        const response = await authedFetch(proxyBase + encodeURIComponent(`${jiraBase}/rest/api/3/issue/${taskKey}`), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        const response = await authedFetch(`${backendBase}/machining/tasks/${taskKey}/`);
         
         if (!response.ok) {
             throw new Error('Task not found');
         }
-        
-        return mapJiraIssueToTask(await response.json());
+        return response.json();
     } else {
         return {
                     key: params.get('key'),
@@ -53,20 +48,6 @@ export async function fetchTaskDetails(taskKey=null) {
     }
     
 }
-
-export async function getActiveTimer(taskKey) {
-    const response = await authedFetch(`${backendBase}/machining/timers?issue_key=${taskKey}&is_active=true&machine_fk=${state.currentMachine.id}`);
-    
-    if (!response.ok) {
-        return null;
-    }
-    
-    const responseData = await response.json();
-    const activeTimer = extractFirstResultFromResponse(responseData);
-    
-    return activeTimer && activeTimer.finish_time === null ? activeTimer : null;
-}
-
 // ============================================================================
 // TIMER OPERATIONS
 // ============================================================================
@@ -141,31 +122,15 @@ export async function createManualTimeEntry(startDateTime, endDateTime, comment 
     return response.ok;
 }
 
-// ============================================================================
-// JIRA OPERATIONS
-// ============================================================================
-
 export async function markTaskAsDone() {
-    const url = `${jiraBase}/rest/api/3/issue/${state.currentIssue.key}/transitions`;
-    const response = await authedFetch(proxyBase + encodeURIComponent(url), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            transition: {
-                id: '41'
-            }
-        })
-    });
-    
-    // Also notify backend to set completed_by and completion_date
-    authedFetch(`${backendBase}/machining/tasks/mark-completed/`, {
+    const response = await authedFetch(`${backendBase}/machining/tasks/mark-completed/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             key: state.currentIssue.key
         })
     });
-    
+        
     return response.ok;
 }
 

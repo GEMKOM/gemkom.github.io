@@ -1,3 +1,5 @@
+import { getSyncedNow } from './timeService.js';
+
 export function mapJiraIssueToTask(jiraIssue) {
     const fields = jiraIssue.fields || {};
 
@@ -35,3 +37,11 @@ export function formatJiraDate(ms) {
     const offsetMinutes = pad(Math.abs(offset) % 60);
     return `${yyyy}-${MM}-${dd}T${hh}:${mm}:${ss}.${msms}${sign}${offsetHours}${offsetMinutes}`;
 }
+
+export function formatDuration(startTime) {
+    const elapsed = Math.floor((getSyncedNow() - startTime) / 1000);
+    const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
+    const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
+    const s = (elapsed % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  }

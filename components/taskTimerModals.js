@@ -74,7 +74,7 @@ function setupManualTimeModalEvents(modal) {
     updateDuration();
 }
 
-export function showManualTimeModal({ createManualTimeEntry, logTimeToJiraShared, isHoldTask = false, comment = null }) {
+export function showManualTimeModal({ createManualTimeEntry, comment = null }) {
     const modal = createManualTimeModal();
     document.body.appendChild(modal);
     return new Promise((resolve) => {
@@ -114,28 +114,7 @@ export function showManualTimeModal({ createManualTimeEntry, logTimeToJiraShared
                 submitBtn.textContent = 'Kaydediliyor...';
                 const timerCreated = await createManualTimeEntry(startDateTime, endDateTime, comment);
                 if (!timerCreated) {
-                    throw new Error('Failed to create timer in database');
-                }
-                
-                // Only save to Jira if not a hold task
-                if (!isHoldTask) {
-                    const started = formatJiraDate(startDateTime.getTime());
-                    const startDateStr = `${startDate} ${startTime}`;
-                    const endDateStr = `${endDate} ${endTime}`;
-                    const comment = `Manuel giriş: ${formatTime(elapsedSeconds)} (${startDateStr} - ${endDateStr})`;
-                    const jiraLogged = await logTimeToJiraShared({
-                        startTime:started, 
-                        elapsedSeconds: elapsedSeconds, 
-                        comment: comment
-                    });
-                    if (jiraLogged) {
-                        alert(`Manuel zaman girişi başarılı: ${formatTime(elapsedSeconds)}`);
-                    } else {
-                        alert("Jira'ya kayıt yapılırken hata oluştu.");
-                    }
-                } else {
-                    // For hold tasks, just show success message without Jira logging
-                    alert(`Manuel zaman girişi başarılı (Bekletme görevi): ${formatTime(elapsedSeconds)}`);
+                    throw new Error('Bir hata oluştu.');
                 }
                 closeModal();
             } catch (error) {

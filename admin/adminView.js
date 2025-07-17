@@ -1,13 +1,14 @@
 // --- adminView.js ---
-import { fetchActiveTimers, formatDuration } from './adminService.js';
-import { getSyncedNow, syncServerTime } from '../generic/timeService.js';
-import { backendBase } from '../base.js';
-import { authedFetch } from '../authService.js';
+import { syncServerTime, getSyncedNow } from '../generic/timeService.js';
+import { formatDuration } from '../generic/formatters.js';
+import { fetchTimers } from '../generic/timers.js';
+import { extractResultsFromResponse } from '../generic/paginationHelper.js';
 
 let timerIntervals = {};
 
 export async function updateActiveTimers() {
-    const activeTimers = await fetchActiveTimers();
+    const response = await fetchTimers(true);
+    const activeTimers = extractResultsFromResponse(response);
     if (activeTimers.length > 0){
         await syncServerTime();
     }
@@ -22,8 +23,7 @@ export async function updateActiveTimers() {
             <td><a href="#" class="task-info-link" data-task='${JSON.stringify(t)}'>${t.issue_key}</a></td>
             <td id="timer-${t.id}">${formatDuration(t.start_time)}</td>
             <td>
-                <button class="btn btn-success btn-sm save-jira" data-timer-id="${t.id}">Jira'ya Kaydet</button>
-                <button class="btn btn-secondary btn-sm stop-only" data-timer-id="${t.id}">Sadece Durdur</button>
+                <button class="btn btn-secondary btn-sm stop-only" data-timer-id="${t.id}">Durdur</button>
             </td>
         `;
         tbody.appendChild(tr);

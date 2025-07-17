@@ -1,5 +1,6 @@
 // components/machineTaskView.js
 // Generic machine/task view for machining etc.
+import { extractResultsFromResponse } from '../generic/paginationHelper.js';
 
 export async function createMachineTaskView({
     containerId = 'main-view',
@@ -43,7 +44,7 @@ export async function createMachineTaskView({
     const machines = await fetchMachines();
     machines.forEach(f => {
         const option = document.createElement('option');
-        option.value = f.jira_id;
+        option.value = f.id;
         option.dataset.machineId = f.id;
         let label = f.name;
         if (f.has_active_timer) {
@@ -77,7 +78,7 @@ export async function createMachineTaskView({
             window.history.pushState({ machineId: selectedMachine.id }, '', newUrl);
             
             // Load tasks for the selected machine
-            loadTasks(selectedMachine.jira_id);
+            loadTasks(selectedMachine.id);
         }
     };
     
@@ -88,8 +89,8 @@ export async function createMachineTaskView({
         if (machineId) {
             const machine = machines.find(m => String(m.id) === String(machineId));
             if (machine) {
-                select.value = machine.jira_id;
-                loadTasks(machine.jira_id);
+                select.value = machine.id;
+                loadTasks(machine.id);
             }
         } else {
             select.value = '';
@@ -102,7 +103,7 @@ export async function createMachineTaskView({
         const term = e.target.value.trim().toLowerCase();
         const filtered = allTasks.filter(task =>
             (task.key && task.key.toLowerCase().includes(term)) ||
-            (task.fields && task.fields.summary && task.fields.summary.toLowerCase().includes(term))
+            (task.name && task.name.toLowerCase().includes(term))
         );
         renderTaskList(filtered);
     };
@@ -149,7 +150,7 @@ export async function createMachineTaskView({
                 const { authedFetch } = await import('../authService.js');
                 const resp = await authedFetch(`${backendBase}/machining/hold-tasks/`);
                 const data = await resp.json();
-                const codes = data.results;
+                const codes = extractResultsFromResponse(data);
                 select.innerHTML = codes.map(code => `<option value="${code.key}">${code.name || code.job_no}</option>`).join('');
             } catch (err) {
                 select.innerHTML = '<option>Bekletme nedenleri alınamadı</option>';
@@ -182,22 +183,23 @@ export async function createMachineTaskView({
                     window.location.href = url;
                 }
             };
-            const fields = task.fields || {};
+            // Render using backend fields
             const left = document.createElement('div');
             left.className = 'task-left';
             const title = document.createElement('h3');
             title.textContent = task.key || '';
             const summary = document.createElement('p');
-            summary.textContent = fields.summary || '';
+            summary.textContent = task.name || '';
             left.appendChild(title);
             left.appendChild(summary);
             const right = document.createElement('div');
             right.className = 'task-right';
             right.innerHTML = `
-                <div>İş Emri: ${fields.customfield_10117 || '-'}</div>
-                <div>Resim No: ${fields.customfield_10184 || '-'}</div>
-                <div>Poz No: ${fields.customfield_10185 || '-'}</div>
-                <div>Adet: ${fields.customfield_10187 || '-'}</div>
+                <div>İş Emri: ${task.job_no || '-'}</div>
+                <div>Resim No: ${task.image_no || '-'}</div>
+                <div>Poz No: ${task.position_no || '-'}</div>
+                <div>Adet: ${task.quantity || '-'}</div>
+                <div>Bitmesi Gereken Tarih: ${task.finish_time ? new Date(task.finish_time).toLocaleDateString('tr-TR') : '-'}</div>
             `;
             card.appendChild(left);
             card.appendChild(right);

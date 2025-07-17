@@ -1,4 +1,5 @@
 import { backendBase } from './base.js';
+import { extractResultsFromResponse } from './generic/paginationHelper.js';
 
 const API_URL = backendBase;
 
@@ -234,7 +235,7 @@ export async function fetchUsers() {
             throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        return data.results;
+        return extractResultsFromResponse(data);
     } catch (error) {
         console.error('Failed to fetch users:', error);
         return [];

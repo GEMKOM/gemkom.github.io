@@ -1,10 +1,8 @@
 import { updateActiveTimers, updateMachines } from './adminView.js';
-import { fetchMachines } from '../generic/machines.js';
 import { getSyncedNow } from '../generic/timeService.js';
-import { stopTimerShared, logTimeToJiraShared } from '../machining/machiningService.js';
+import { stopTimerShared } from '../machining/machiningService.js';
 import { TimerWidget } from '../components/timerWidget.js';
 import { authedFetch } from '../authService.js';
-import { extractResultsFromResponse } from '../generic/paginationHelper.js';
 
 export async function showMachiningLiveReport() {
     const mainContent = document.querySelector('.admin-main-content .container-fluid');
@@ -77,59 +75,12 @@ function setupMachiningTableEventListeners() {
     const tbody = document.getElementById('active-timers');
     if (!tbody) return;
     tbody.addEventListener('click', async (e) => {
-        const jiraBtn = e.target.closest('.save-jira');
         const stopBtn = e.target.closest('.stop-only');
-        if (jiraBtn) {
-            const timerId = jiraBtn.getAttribute('data-timer-id');
-            await handleSaveToJira(timerId);
-        } else if (stopBtn) {
+        if (stopBtn) {
             const timerId = stopBtn.getAttribute('data-timer-id');
             await handleStopOnly(timerId);
         }
     });
-}
-
-async function fetchActiveTimerById(timerId) {
-    // Fetch all active timers and find the one with the given ID
-    const res = await authedFetch(`/machining/timers/${timerId}/`);
-    if (!res.ok) return null;
-    const timer = await res.json();
-    if (timer.finish_time === null) {
-        return timer;
-    }
-    return null;
-}
-
-async function handleSaveToJira(timerId) {
-    const finishTime = getSyncedNow();
-    // Fetch the timer object by timerId
-    const timer = await fetchActiveTimerById(timerId);
-    if (!timer) {
-        alert('Timer bulunamadı!');
-        return;
-    }
-
-    // 1. Stop timer with syncToJira=true
-    const stopped = await stopTimerShared({ timerId, finishTime, syncToJira: true });
-    if (!stopped) {
-      return alert('Timer durdurulamadı!');
-    }
-    // 2. Log to Jira
-    let elapsedSeconds = Math.round((finishTime - timer.start_time) / 1000);
-    elapsedSeconds = Math.max(elapsedSeconds, 60);
-
-    const logged = await logTimeToJiraShared({ issueKey: timer.issue_key, startTime: timer.start_time, elapsedSeconds: elapsedSeconds });
-    if (logged) {
-        alert(`Timer ${timerId} Jira'ya kaydedildi ve durduruldu!`);
-    } else {
-        alert('Jira kaydı başarısız!');
-    }
-
-    // Trigger timer widget update
-    TimerWidget.triggerUpdate();
-
-    await updateActiveTimers();
-    await updateMachines();
 }
 
 async function handleStopOnly(timerId) {

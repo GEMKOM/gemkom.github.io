@@ -1,7 +1,7 @@
 // --- taskActions.js ---
 // Button action handlers for task functionality
 
-import { state, logTimeToJiraShared } from '../machiningService.js';
+import { state } from '../machiningService.js';
 import { navigateTo, ROUTES } from '../../authService.js';
 import { markTaskAsDone } from './taskApi.js';
 import { showManualTimeModal, createFaultReportModal, showCommentModal } from '../../components/taskTimerModals.js';
@@ -72,17 +72,13 @@ export async function handleManualLogClick() {
         const comment = await showCommentModal("Bekletme Görevi Manuel Giriş");
         if (comment) {
             await showManualTimeModal({
-                createManualTimeEntry, 
-                logTimeToJiraShared, 
-                isHoldTask: state.currentIssue.is_hold_task,
+                createManualTimeEntry,
                 comment: comment
             });
         }
     } else {
         await showManualTimeModal({
-            createManualTimeEntry, 
-            logTimeToJiraShared, 
-            isHoldTask: state.currentIssue.is_hold_task
+            createManualTimeEntry
         });
     }
 }

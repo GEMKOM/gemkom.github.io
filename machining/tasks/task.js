@@ -5,8 +5,7 @@ import { initNavbar } from '../../components/navbar.js';
 import { guardRoute, navigateTo, ROUTES } from '../../authService.js';
 import { 
     getTaskKeyFromURL, 
-    fetchTaskDetails,
-    getActiveTimer
+    fetchTaskDetails
 } from './taskApi.js';
 import { 
     setCurrentIssueState,
@@ -17,6 +16,9 @@ import {
     setupTaskDisplay
 } from './taskUI.js';
 import { setupAllHandlers } from './taskHandlers.js';
+import { fetchTimers } from '../../generic/timers.js';
+import { extractFirstResultFromResponse } from '../../generic/paginationHelper.js';
+import { state } from '../machiningService.js';
 
 // ============================================================================
 // INITIALIZATION
@@ -36,7 +38,7 @@ async function initializeTaskView() {
     }
     await setCurrentMachineState();
     let issue = await fetchTaskDetails(taskKey);
-    const activeTimer = await getActiveTimer(taskKey);
+    const activeTimer = extractFirstResultFromResponse(await fetchTimers(true, state.currentMachine.id, taskKey));
     setCurrentIssueState(issue);
     setCurrentTimerState(activeTimer);
     setupTaskDisplay(activeTimer ? true : false, issue.is_hold_task);

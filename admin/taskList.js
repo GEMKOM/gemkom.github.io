@@ -1,6 +1,7 @@
-import { backendBase, jiraBase, proxyBase } from '../base.js';
+import { backendBase } from '../base.js';
 import { authedFetch } from '../authService.js';
 import { fetchMachines } from '../generic/machines.js';
+import { extractResultsFromResponse } from '../generic/paginationHelper.js';
 
 const columns = [
     { key: 'key', label: 'TI No' },
@@ -262,7 +263,7 @@ async function renderTaskListTable(page = currentPage) {
         const resp = await authedFetch(url);
         if (!resp.ok) throw new Error('Liste alınamadı');
         const result = await resp.json();
-        const data = result.results;
+        const data = extractResultsFromResponse(result);
         if (!Array.isArray(data) || data.length === 0) {
             container.innerHTML = '<div>Sonuç bulunamadı.</div>';
             return;
@@ -596,7 +597,7 @@ function updateCellContent(cell, field, value, type) {
 
 function renderPagination(result, currentPage) {
     // result: API response object with count, next, previous, etc.
-    const pageSize = result.results.length;
+    const pageSize = extractResultsFromResponse(result).length;
     const totalCount = result.count || 0;
     const pageCount = pageSize > 0 ? Math.ceil(totalCount / pageSize) : 1;
     if (pageCount <= 1) return '';
@@ -639,7 +640,7 @@ async function showHoldTasks() {
         const resp = await authedFetch(url);
         if (!resp.ok) throw new Error('Bekleyen işler alınamadı');
         const result = await resp.json();
-        const data = result.results || [];
+        const data = extractResultsFromResponse(result) || [];
         
         // Create or update modal
         let modalHtml = `

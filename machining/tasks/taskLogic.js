@@ -1,7 +1,7 @@
 // --- taskLogic.js ---
 // Core business logic for task functionality
 
-import { state, stopTimerShared, logTimeToJiraShared } from '../machiningService.js';
+import { state, stopTimerShared } from '../machiningService.js';
 import { updateTimerDisplay, setupTaskDisplay} from './taskUI.js';
 import { TimerWidget } from '../../components/timerWidget.js';
 import { startTimer } from './taskApi.js';
@@ -71,13 +71,6 @@ export async function handleStopTimer(save_to_jira=true) {
         });
         
         if (stopSuccess) {
-            if (save_to_jira) {
-                await logTimeToJiraShared({ 
-                    issueKey: state.currentIssue.key,
-                    startTime: state.currentTimer.start_time, 
-                    elapsedSeconds: elapsed 
-                });
-            }
             setupTaskDisplay(false, state.currentIssue.is_hold_task);
             setCurrentTimerState(null);
             setCurrentMachineState(state.currentMachine.id);

@@ -1,6 +1,7 @@
 import { authedFetch } from '../../authService.js';
 import { backendBase } from '../../base.js';
 import { fetchMachines } from '../../generic/machines.js';
+import { extractResultsFromResponse } from '../../generic/paginationHelper.js';
 
 const planningColumns = [
     { id: "machine", label: "Makine" },
@@ -51,7 +52,7 @@ async function loadMachinePlanning() {
         const tasksResponse = await authedFetch(`${backendBase}/machining/tasks/?completion_date__isnull=true&page_size=1000`);
         if (!tasksResponse.ok) throw new Error('Görevler alınamadı');
         const tasksResult = await tasksResponse.json();
-        const tasks = tasksResult.results || [];
+        const tasks = extractResultsFromResponse(tasksResult) || [];
         const machines = await fetchMachines('machining');
         
         // Group tasks by machine

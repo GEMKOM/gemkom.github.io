@@ -1,11 +1,7 @@
 // --- machiningService.js ---
-import {
-  proxyBase,
-  backendBase,
-  jiraBase
-} from '../base.js';
+import { backendBase } from '../base.js';
 import { authedFetch } from '../authService.js';
-import { formatTime, formatJiraDate } from '../generic/formatters.js';
+import { extractResultsFromResponse } from '../generic/paginationHelper.js';
 
 export const state = {
     intervalId: null,
@@ -27,16 +23,16 @@ export const state = {
 };
 
 
-export async function fetchTasksForMachining(filterId) {
-    const jql = `filter=${filterId} AND status="To Do"`;
-    const encodedJql = encodeURIComponent(jql);
-    
-    const url = `${jiraBase}/rest/api/3/search?jql=${encodedJql}&fields=summary,customfield_10117,customfield_10184,customfield_10185,customfield_10187,customfield_11411`;
-    const res = await authedFetch(proxyBase + encodeURIComponent(url), {
-        headers: { 'Content-Type': 'application/json' }
-    });
-    const data = await res.json();
-    return data.issues;
+export async function fetchTasksForMachining(machineId) {
+    // Fetch tasks from our backend, optionally filtered by machine
+    let url = `${backendBase}/machining/tasks/?completion_date__isnull=true&ordering=key&page_size=100`;
+    if (machineId) {
+        url += `&machine_fk=${encodeURIComponent(machineId)}`;
+    }
+    const resp = await authedFetch(url);
+    if (!resp.ok) throw new Error('Görevler alınamadı');
+    const data = await resp.json();
+    return extractResultsFromResponse(data);
 }
 
 
@@ -48,35 +44,6 @@ export async function stopTimerShared({ timerId, finishTime, syncToJira }) {
             timer_id: timerId,
             finish_time: finishTime,
             synced_to_jira: syncToJira
-        })
-    });
-    return response.ok;
-}
-
-
-export async function logTimeToJiraShared({ startTime, elapsedSeconds, comment, issueKey=null }) {
-    if (!issueKey){
-      issueKey = state.currentIssue.key;
-    }
-    const started = formatJiraDate(startTime);
-    const url = `${jiraBase}/rest/api/3/issue/${issueKey}/worklog`;
-    const response = await authedFetch(proxyBase + encodeURIComponent(url), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            started,
-            timeSpentSeconds: elapsedSeconds,
-            comment: {
-                type: 'doc',
-                version: 1,
-                content: [{
-                    type: 'paragraph',
-                    content: [{
-                        type: 'text',
-                        text: comment || `Logged via Admin Panel: ${formatTime(elapsedSeconds)}`
-                    }]
-                }]
-            }
         })
     });
     return response.ok;

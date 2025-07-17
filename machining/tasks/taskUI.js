@@ -36,7 +36,6 @@ export function updateTimerDisplay() {
 export function setupTaskDisplay(hasActiveTimer, isHoldTask) {
     const { startBtn, stopOnlyBtn, manualBtn, doneBtn, faultBtn, backBtn, timerDisplay, taskTitle, machineName } = getUIElements();
     if (!taskTitle.textContent) {
-
         
         taskTitle.textContent = state.currentIssue.key;
         machineName.textContent = state.currentMachine.name;
@@ -102,7 +101,7 @@ export function setupTaskDisplay(hasActiveTimer, isHoldTask) {
         doneBtn.style.display = 'none';
         
         if (!hasActiveTimer) {
-            startBtn.style.display = 'block'; // Ensure start button is visible
+            startBtn.style.display = 'block'; // Show start button
             startBtn.textContent = 'Başlat';
             startBtn.classList.remove('red');
             startBtn.classList.add('green');
@@ -115,20 +114,19 @@ export function setupTaskDisplay(hasActiveTimer, isHoldTask) {
             timerDisplay.textContent = '00:00:00';
             setupAllHandlers();
         } else {
-            // For hold tasks with active timer, don't show "Durdur ve İşle" button
+            // For hold tasks with active timer, hide start button, show stopOnlyBtn
             startBtn.style.display = 'none';
             stopOnlyBtn.classList.remove('hidden');
             manualBtn.style.display = 'none';
             faultBtn.style.display = 'none';
             backBtn.style.display = 'none';
-            
             // Reattach handlers for visible buttons
             setupStopOnlyHandler();
         }
     } else {
         // Normal task behavior
         if (!hasActiveTimer) {
-            startBtn.style.display = 'block'; // Ensure start button is visible
+            startBtn.style.display = 'block'; // Show start button
             startBtn.textContent = 'Başlat';
             startBtn.classList.remove('red');
             startBtn.classList.add('green');
@@ -142,18 +140,14 @@ export function setupTaskDisplay(hasActiveTimer, isHoldTask) {
             timerDisplay.textContent = '00:00:00';
             setupAllHandlers();
         } else {
-            startBtn.style.display = 'block'; // Ensure start button is visible
-            startBtn.textContent = 'Durdur ve İşle';
-            startBtn.classList.remove('green');
-            startBtn.classList.add('red');
+            // Timer is running: hide start button, show stopOnlyBtn
+            startBtn.style.display = 'none';
             stopOnlyBtn.classList.remove('hidden');
             manualBtn.style.display = 'none';
             doneBtn.style.display = 'none';
             faultBtn.style.display = 'none';
             backBtn.style.display = 'none';
-            
             // Reattach handlers for visible buttons
-            setupStartStopHandler();
             setupStopOnlyHandler();
         }
     }

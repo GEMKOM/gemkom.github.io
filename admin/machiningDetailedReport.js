@@ -2,13 +2,14 @@
 import { backendBase } from "../base.js";
 import { authedFetch } from "../authService.js";
 import { fetchMachines } from "../generic/machines.js";
+import { extractResultsFromResponse } from "../generic/paginationHelper.js";
 
 async function fetchUsersForMachining() {
     // Adjust endpoint if needed
     const resp = await authedFetch(`${backendBase}/users?team=machining`);
     if (!resp.ok) return [];
     const data = await resp.json();
-    return data.results;
+    return extractResultsFromResponse(data);
 }
 
 export function showMachiningDetailedReport() {

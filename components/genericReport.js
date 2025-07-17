@@ -1,4 +1,5 @@
 import { authedFetch } from "../authService.js";
+import { extractResultsFromResponse } from "../generic/paginationHelper.js";
 
 export class GenericReport {
     constructor(config) {
@@ -298,9 +299,8 @@ export class GenericReport {
             const responseData = await resp.json();
             
             // Handle paginated response
-            let data;
-            if (responseData.results && Array.isArray(responseData.results)) {
-                data = responseData.results;
+            let data = extractResultsFromResponse(responseData);
+            if (data) {
                 this.paginationData = {
                     count: responseData.count,
                     next: responseData.next,
