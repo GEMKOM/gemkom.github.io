@@ -28,3 +28,8 @@ export async function getMachine(machineId) {
     const response = await authedFetch(`${backendBase}/machines/${machineId}/`);
     return response.json();
 }
+
+export async function fetchMachineTypes() {
+    const response = await authedFetch(`${backendBase}/machines/types/`);
+    return response.json();
+}

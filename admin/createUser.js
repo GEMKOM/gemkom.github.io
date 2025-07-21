@@ -1,6 +1,6 @@
 import { backendBase } from '../base.js';
 import { authedFetch } from '../authService.js';
-import { fetchUsers } from '../authService.js';
+import { fetchUsers, fetchTeams } from '../generic/users.js';
 
 export async function showUserCreateForm() {
     const mainContent = document.querySelector('.admin-main-content .container-fluid');
@@ -8,9 +8,8 @@ export async function showUserCreateForm() {
     mainContent.innerHTML = `<div class="row justify-content-center user-create-form"><div class="col-12 col-md-8 col-lg-6"><div class="card"><div class="card-header"><h5 class="mb-0">Kullanıcı Ekle</h5></div><div class="card-body"><form id="user-create-form"><div class="mb-3"><label for="username" class="form-label">Kullanıcı Adı</label><input type="text" class="form-control" id="username" required></div><div class="mb-3"><label for="team" class="form-label">Takım</label><select class="form-select" id="team" required><option value="">Takım seçiniz...</option></select></div><button type="submit" class="btn btn-primary w-100" style="background-color: #cc0000; border-color: #cc0000;">Oluştur</button><div id="user-create-error" class="text-danger mt-2" style="display:none;"></div><div id="user-create-success" class="text-success mt-2" style="display:none;"></div></form></div></div></div></div>`;
     // Fetch teams
     try {
-        const res = await authedFetch(`${backendBase}/users/teams/`);
-        if (res.ok) {
-            const teams = await res.json();
+        const teams = await fetchTeams();
+        if (teams) {
             const teamSelect = document.getElementById('team');
             teams.forEach(team => {
                 const opt = document.createElement('option');
@@ -35,7 +34,7 @@ export async function showUserCreateForm() {
             return;
         }
         try {
-            const res = await authedFetch(`${backendBase}/users/admin/create-user/`, {
+            const res = await authedFetch(`${backendBase}/users/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, team })

@@ -3,6 +3,8 @@
 
 import { authedFetch } from '../authService.js';
 import { backendBase } from '../base.js';
+import { fetchTeams } from '../generic/users.js';
+import { fetchMachineTypes } from '../generic/machines.js';
 
 export async function showMachineCreateForm() {
     const mainContent = document.querySelector('.admin-main-content .container-fluid');
@@ -13,18 +15,8 @@ export async function showMachineCreateForm() {
     let teams = [];
     
     try {
-        const [typesResponse, teamsResponse] = await Promise.all([
-            authedFetch(`${backendBase}/machines/types/`),
-            authedFetch(`${backendBase}/users/teams/`)
-        ]);
-        
-        if (typesResponse.ok) {
-            machineTypes = await typesResponse.json();
-        }
-        
-        if (teamsResponse.ok) {
-            teams = await teamsResponse.json();
-        }
+        machineTypes = await fetchMachineTypes();
+        teams = await fetchTeams();
     } catch (error) {
         console.error('Error fetching dropdown data:', error);
     }

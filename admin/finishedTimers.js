@@ -1,6 +1,7 @@
 import { backendBase } from "../base.js";
 import { authedFetch } from "../authService.js";
 import { GenericReport } from "../components/genericReport.js";
+import { fetchTaskById } from "../generic/tasks.js";
 
 export function showFinishedTimers() {
     const mainContent = document.querySelector('.admin-main-content .container-fluid');
@@ -90,6 +91,11 @@ export function showFinishedTimers() {
                 }
                 return '';
             }
+            // Custom rendering for issue_key to show modal instead of Jira link
+            if (col === 'issue_key' && val) {
+                // Return a special object that indicates this is already HTML
+                return { __html: `<a href="#" class="task-info-link" data-task='${JSON.stringify(row)}'>${val}</a>` };
+            }
             return val;
         },
         onDelete: async (id, data) => {
@@ -130,6 +136,33 @@ export function showFinishedTimers() {
             modal.show();
         }
     });
+
+    // Add event listeners for task info links after data is loaded
+    const originalBindActionEvents = report.bindActionEvents.bind(report);
+    report.bindActionEvents = function(data) {
+        originalBindActionEvents(data);
+        // Add event listeners for task info links
+        document.querySelectorAll('.task-info-link').forEach(link => {
+            link.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const taskData = JSON.parse(link.getAttribute('data-task'));
+                
+                // Only fetch task details for non-hold tasks
+                if (!taskData.issue_is_hold_task) {
+                    const taskDetails = await fetchTaskById(taskData.issue_key);
+                    if (taskDetails) {
+                        showTaskInfoModal(taskData, taskDetails);
+                    } else {
+                        // Fallback to timer info if task details not found
+                        showTaskInfoModal(taskData);
+                    }
+                } else {
+                    // For hold tasks, just show timer info
+                    showTaskInfoModal(taskData);
+                }
+            });
+        });
+    };
 
     // Add modal HTML for editing
     if (!document.getElementById('edit-timer-modal')) {
@@ -199,4 +232,151 @@ export function showFinishedTimers() {
         const pad = n => n.toString().padStart(2, '0');
         return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
+}
+
+function showTaskInfoModal(taskData, taskDetails = null) {
+    // Remove existing modal if present
+    const existingModal = document.getElementById('task-info-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Use task details if available, otherwise fall back to timer data
+    const displayData = taskDetails || taskData;
+    const isHoldTask = taskData.issue_is_hold_task;
+    
+    // Create modal HTML
+    const modalHtml = `
+        <div class="modal" tabindex="-1" id="task-info-modal" style="display:none; background:rgba(0,0,0,0.5); position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:1050; align-items:center; justify-content:center;">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Görev Bilgileri - ${displayData.key || taskData.issue_key}</h5>
+                        <button type="button" class="btn-close" id="close-task-info-modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${displayData.completion_date ? `
+                        <div class="alert alert-success mb-3">
+                            <strong>✅ Bu görev tamamlanmıştır</strong>
+                        </div>
+                        ` : ''}
+                        <div class="row">
+                            <div class="col-md-12">
+                                <strong>Görev Adı:</strong><br>
+                                <span>${isHoldTask ? (taskData.issue_name || displayData.name) : (displayData.name || 'Belirtilmemiş')}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        ${isHoldTask ? `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>İş No:</strong><br>
+                                <span>${displayData.job_no || 'Belirtilmemiş'}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Makine:</strong><br>
+                                <span>${displayData.machine_name || 'Belirtilmemiş'}</span>
+                            </div>
+                        </div>
+                        ${taskData.comment ? `
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <strong>Yorum:</strong><br>
+                                <span>${taskData.comment}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ` : `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>İş No:</strong><br>
+                                <span>${displayData.job_no || 'Belirtilmemiş'}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Resim No:</strong><br>
+                                <span>${displayData.image_no || 'Belirtilmemiş'}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Pozisyon No:</strong><br>
+                                <span>${displayData.position_no || 'Belirtilmemiş'}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Adet:</strong><br>
+                                <span>${displayData.quantity || 'Belirtilmemiş'}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Makine:</strong><br>
+                                <span>${displayData.machine_name || 'Belirtilmemiş'}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Tahmini Süre:</strong><br>
+                                <span>${displayData.estimated_hours ? displayData.estimated_hours + ' saat' : 'Belirtilmemiş'}</span>
+                            </div>
+                        </div>
+                        `}
+                        ${displayData.total_hours_spent ? `
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Toplam Harcanan Süre:</strong><br>
+                                <span>${displayData.total_hours_spent} saat</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Bitiş Tarihi:</strong><br>
+                                <span>${displayData.finish_time || 'Belirtilmemiş'}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${displayData.completion_date ? `
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Tamamlanma Tarihi:</strong><br>
+                                <span>${displayData.completion_date}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Tamamlayan:</strong><br>
+                                <span>${displayData.completed_by || 'Belirtilmemiş'}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${isHoldTask ? `
+                        <hr>
+                        <div class="alert alert-warning">
+                            <strong>⚠️ Bu görev özel görevler kategorisindedir.</strong>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="close-task-info-btn">Kapat</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    const modal = document.getElementById('task-info-modal');
+    
+    // Show modal
+    modal.style.display = 'flex';
+    
+    // Add event listeners for modal controls
+    document.getElementById('close-task-info-modal').onclick = () => { modal.style.display = 'none'; };
+    document.getElementById('close-task-info-btn').onclick = () => { modal.style.display = 'none'; };
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
 } 

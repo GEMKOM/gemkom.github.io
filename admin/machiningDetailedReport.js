@@ -2,15 +2,8 @@
 import { backendBase } from "../base.js";
 import { authedFetch } from "../authService.js";
 import { fetchMachines } from "../generic/machines.js";
-import { extractResultsFromResponse } from "../generic/paginationHelper.js";
+import { fetchUsers } from "../generic/users.js";
 
-async function fetchUsersForMachining() {
-    // Adjust endpoint if needed
-    const resp = await authedFetch(`${backendBase}/users?team=machining`);
-    if (!resp.ok) return [];
-    const data = await resp.json();
-    return extractResultsFromResponse(data);
-}
 
 export function showMachiningDetailedReport() {
     const mainContent = document.querySelector('.admin-main-content .container-fluid');
@@ -113,7 +106,7 @@ export function showMachiningDetailedReport() {
             let groupLabel = 'Grup';
             if (groupBy === 'user') {
                 groupLabel = 'Kullanıcı';
-                const users = await fetchUsersForMachining();
+                const users = await fetchUsers('machining');
                 mergedData = users.map(user => {
                     const found = data.find(row => row.group === user.username);
                     return {

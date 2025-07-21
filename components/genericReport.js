@@ -468,6 +468,11 @@ export class GenericReport {
             val = this.config.onDataTransform(row, col, val);
         }
 
+        // Check if onDataTransform returned a special HTML object
+        if (val && typeof val === 'object' && val.__html) {
+            return val.__html;
+        }
+
         // Default formatting
         if (val == null) {
             val = '';

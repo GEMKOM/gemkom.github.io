@@ -226,18 +226,3 @@ export async function authedFetch(url, options = {}) {
 
     return response;
 }
-
-export async function fetchUsers() {
-    try {
-        // This endpoint is assumed to be public for the login page user list.
-        const response = await fetch(`${API_URL}/users/`);
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        return extractResultsFromResponse(data);
-    } catch (error) {
-        console.error('Failed to fetch users:', error);
-        return [];
-    }
-}

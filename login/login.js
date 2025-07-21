@@ -1,5 +1,6 @@
 // login/login.js
-import { login, fetchUsers, navigateTo, ROUTES, shouldBeOnLoginPage, navigateByTeam } from '../authService.js';
+import { login, navigateTo, ROUTES, shouldBeOnLoginPage, navigateByTeam } from '../authService.js';
+import { fetchUsers } from '../generic/users.js';
 
 function populateUserSelect(users) {
     const userSelect = document.getElementById('user-select');
@@ -27,14 +28,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginButton = document.getElementById('login-button');
     const errorMessage = document.getElementById('error-message');
 
-    // Fetch and populate users
-    // try {
     const users = await fetchUsers();
     populateUserSelect(users);
-    // } catch (error) {
-    //     errorMessage.textContent = 'Kullanıcılar yüklenemedi.';
-    //     errorMessage.style.display = 'block';
-    // }
+ 
 
     // Handle user selection
     userSelect.addEventListener('change', () => {
