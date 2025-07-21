@@ -138,30 +138,36 @@ async function handleMesaiTalebiSubmit(e) {
     }
     
     try {
-        // Get users for the current team
-        const users = await fetchUsers(user.team);
-        
         // Collect data from form inputs for selected users only
         const rows = [];
-        users.forEach(user => {
-            const checkbox = document.querySelector(`input[data-username="${user.username}"]`);
-            const jobOrderInput = document.querySelector(`input.job-order-input[data-username="${user.username}"]`);
-            const descriptionInput = document.querySelector(`textarea.description-input[data-username="${user.username}"]`);
+        
+        // Get all checkboxes that are checked
+        const checkedCheckboxes = document.querySelectorAll('.user-select-checkbox:checked');
+        
+        checkedCheckboxes.forEach(checkbox => {
+            const username = checkbox.getAttribute('data-username');
+            const jobOrderInput = document.querySelector(`input.job-order-input[data-username="${username}"]`);
+            const descriptionInput = document.querySelector(`textarea.description-input[data-username="${username}"]`);
             
-            // Only process if user is selected
-            if (checkbox && checkbox.checked) {
-                const jobOrderNumber = jobOrderInput ? jobOrderInput.value.trim() : '';
-                const description = descriptionInput ? descriptionInput.value.trim() : '';
+            const jobOrderNumber = jobOrderInput ? jobOrderInput.value.trim() : '';
+            const description = descriptionInput ? descriptionInput.value.trim() : '';
+            
+            // Only include users who have job order numbers
+            if (jobOrderNumber) {
+                // Get user display name from the table
+                const userRow = checkbox.closest('tr');
+                const nameCell = userRow.querySelector('td:nth-child(2) strong');
+                const occupationCell = userRow.querySelector('td:nth-child(3) span');
                 
-                // Only include users who have job order numbers
-                if (jobOrderNumber) {
-                    rows.push({
-                        'İsim': user.first_name ? `${user.first_name} ${user.last_name}` : user.username,
-                        'Görev': user.occupation_label || 'Görev belirtilmemiş',
-                        'İş Emri Numarası': jobOrderNumber,
-                        'Açıklama (Opsiyonel)': description
-                    });
-                }
+                const displayName = nameCell ? nameCell.textContent : username;
+                const occupation = occupationCell ? occupationCell.textContent : 'Görev belirtilmemiş';
+                
+                rows.push({
+                    'İsim': displayName,
+                    'Görev': occupation,
+                    'İş Emri Numarası': jobOrderNumber,
+                    'Açıklama (Opsiyonel)': description
+                });
             }
         });
         
