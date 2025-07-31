@@ -14,6 +14,16 @@ function populateUserSelect(users) {
     });
 }
 
+function showUserLogin() {
+    document.getElementById('user-login-container').style.display = 'block';
+    document.getElementById('admin-login-container').style.display = 'none';
+}
+
+function showAdminLogin() {
+    document.getElementById('user-login-container').style.display = 'none';
+    document.getElementById('admin-login-container').style.display = 'block';
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Check if user should be on this page
     if (!shouldBeOnLoginPage()) {
@@ -28,16 +38,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginButton = document.getElementById('login-button');
     const errorMessage = document.getElementById('error-message');
 
+    // Admin login elements
+    const adminLoginBtn = document.getElementById('admin-login-btn');
+    const adminLoginForm = document.getElementById('admin-login-form');
+    const adminUsernameInput = document.getElementById('admin-username');
+    const adminPasswordInput = document.getElementById('admin-password');
+    const adminLoginButton = document.getElementById('admin-login-button');
+    const adminErrorMessage = document.getElementById('admin-error-message');
+    const backToUserLoginBtn = document.getElementById('back-to-user-login');
+
     const users = await fetchUsers();
     populateUserSelect(users);
- 
+
+    // Handle admin button click
+    adminLoginBtn.addEventListener('click', () => {
+        showAdminLogin();
+    });
+
+    // Handle back to user login button
+    backToUserLoginBtn.addEventListener('click', () => {
+        showUserLogin();
+    });
 
     // Handle user selection
     userSelect.addEventListener('change', () => {
         usernameInput.value = userSelect.value;
     });
 
-    // Handle form submission
+    // Handle regular user form submission
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -67,6 +95,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             errorMessage.style.display = 'block';
             loginButton.disabled = false;
             loginButton.textContent = 'Giriş Yap';
+        }
+    });
+
+    // Handle admin form submission
+    adminLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const username = adminUsernameInput.value;
+        const password = adminPasswordInput.value;
+
+        if (!username || !password) {
+            adminErrorMessage.textContent = 'Lütfen kullanıcı adı ve şifre girin.';
+            adminErrorMessage.style.display = 'block';
+            return;
+        }
+        
+        adminLoginButton.disabled = true;
+        adminLoginButton.textContent = 'Giriş Yapılıyor...';
+        adminErrorMessage.style.display = 'none';
+
+        try {
+            await login(username, password);
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user.must_reset_password){
+                navigateTo(ROUTES.RESET_PASSWORD);
+            } else {
+                navigateByTeam();
+            }
+        } catch (error) {
+            adminErrorMessage.textContent = 'Kullanıcı adı veya şifre hatalı.';
+            adminErrorMessage.style.display = 'block';
+            adminLoginButton.disabled = false;
+            adminLoginButton.textContent = 'Admin Girişi';
         }
     });
 });

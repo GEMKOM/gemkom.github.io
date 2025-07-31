@@ -9,7 +9,13 @@
     <link rel="stylesheet" href="login.css">
 </head>
 <body>
-    <div class="login-container">
+    <!-- Admin Login Button -->
+    <div class="admin-button-container">
+        <button id="admin-login-btn" class="btn btn-outline-secondary">Admin</button>
+    </div>
+
+    <!-- Regular User Login -->
+    <div class="login-container" id="user-login-container">
         <div class="login-box">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <img src="../images/gemkom.png" alt="Gemkom Logo" class="mb-4" style="height: 75px;">
@@ -32,6 +38,29 @@
                     <input type="password" class="form-control" id="password" required>
                 </div>
                 <button type="submit" id="login-button" class="btn btn-primary w-100">Giriş Yap</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Login -->
+    <div class="login-container" id="admin-login-container" style="display: none;">
+        <div class="login-box">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="../images/gemkom.png" alt="Gemkom Logo" class="mb-4" style="height: 75px;">
+                <h3 class="mb-4" style="margin: 0;">Admin Girişi</h3>
+              </div>
+            <div id="admin-error-message" class="alert alert-danger" style="display: none;"></div>
+            <form id="admin-login-form">
+                <div class="mb-3">
+                    <label for="admin-username" class="form-label">Kullanıcı Adı</label>
+                    <input type="text" class="form-control" id="admin-username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="admin-password" class="form-label">Şifre</label>
+                    <input type="password" class="form-control" id="admin-password" required>
+                </div>
+                <button type="submit" id="admin-login-button" class="btn btn-primary w-100">Admin Girişi</button>
+                <button type="button" id="back-to-user-login" class="btn btn-secondary w-100 mt-2">Personel Girişine Dön</button>
             </form>
         </div>
     </div>
