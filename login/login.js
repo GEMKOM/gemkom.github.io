@@ -24,12 +24,20 @@ function showAdminLogin() {
     document.getElementById('admin-login-container').style.display = 'block';
 }
 
+function showDeprecationModal() {
+    const modal = new bootstrap.Modal(document.getElementById('deprecationModal'));
+    modal.show();
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Check if user should be on this page
     if (!shouldBeOnLoginPage()) {
         navigateByTeam();
         return;
     }
+
+    // Show deprecation modal on page load
+    showDeprecationModal();
 
     const loginForm = document.getElementById('login-form');
     const userSelect = document.getElementById('user-select');
@@ -47,8 +55,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const adminErrorMessage = document.getElementById('admin-error-message');
     const backToUserLoginBtn = document.getElementById('back-to-user-login');
 
+    // Info button for reopening modal
+    const infoBtn = document.getElementById('info-btn');
+
     const users = await fetchUsers();
     populateUserSelect(users);
+
+    // Handle info button click
+    infoBtn.addEventListener('click', () => {
+        showDeprecationModal();
+    });
+
+    // Prevent modal from closing when clicking navigation buttons
+    const modal = document.getElementById('deprecationModal');
+    const navigationButtons = modal.querySelectorAll('a[target="_blank"]');
+    
+    navigationButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const url = button.getAttribute('href');
+            window.open(url, '_blank');
+        });
+    });
 
     // Handle admin button click
     adminLoginBtn.addEventListener('click', () => {

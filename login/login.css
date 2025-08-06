@@ -13,11 +13,62 @@ body {
     background-color: var(--light-bg);
 }
 
+/* Deprecation Modal Styles */
+#deprecationModal .modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+#deprecationModal .modal-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border-radius: 15px 15px 0 0;
+    border-bottom: none;
+}
+
+#deprecationModal .modal-header .btn-close {
+    filter: invert(1);
+}
+
+#deprecationModal .card {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+#deprecationModal .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    border-color: var(--secondary-color);
+}
+
+#deprecationModal .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+#deprecationModal .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+#deprecationModal .alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+    border-radius: 8px;
+}
+
 .admin-button-container {
     position: fixed;
     top: 20px;
     right: 20px;
     z-index: 1000;
+    display: flex;
+    gap: 8px;
 }
 
 .admin-button-container .btn {
@@ -30,6 +81,17 @@ body {
 .admin-button-container .btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.admin-button-container .btn-outline-info {
+    color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+.admin-button-container .btn-outline-info:hover {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
 }
 
 .login-container {
